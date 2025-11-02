@@ -10,7 +10,7 @@ export default function SignIn() {
     const [loading, setLoading] = useState(false);
 
     return (
-        <Card className="max-w-md">
+        <Card className="w-full max-w-lg">
             <CardHeader>
                 <CardTitle className="text-lg md:text-xl">sign in to lift</CardTitle>
                 <CardDescription className="text-xs md:text-sm">

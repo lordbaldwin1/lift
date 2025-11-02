@@ -3,7 +3,7 @@ import SignIn from "~/components/sign-in";
 
 export default function SignInPage() {
     return (
-        <div>
+        <div className="flex items-center justify-center h-[65vh]">
             <SignIn />
         </div>
     )
