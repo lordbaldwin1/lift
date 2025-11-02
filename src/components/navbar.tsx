@@ -30,7 +30,10 @@ export default function Navbar() {
 
   return (
     <section className="flex flex-row items-center justify-between">
-      <Link href={"/"} className="text-xl">lift</Link>
+      <div className="space-x-4">
+        <Link href={"/"} className="text-xl">lift</Link>
+        <Link href={"/workout"} className="hover:text-muted-foreground">workout</Link>
+      </div>
       <div className="flex flex-row items-center">
         <ThemeToggle />
         {isPending ? (
@@ -38,7 +41,7 @@ export default function Navbar() {
         ) : session ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant={"link"}>
+              <Button variant={"link"} className="hover:text-muted-foreground">
                 <UserRound />
               </Button>
             </DropdownMenuTrigger>
