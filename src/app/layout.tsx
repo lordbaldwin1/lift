@@ -4,6 +4,7 @@ import { type Metadata } from "next";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "~/components/theme-provider";
 import Navbar from "~/components/navbar";
+import { Toaster } from "~/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "lift",
@@ -31,6 +32,7 @@ export default function RootLayout({
           >
             <Navbar />
             {children}
+            <Toaster position="top-center"/>
           </ThemeProvider>
         </div>
       </body>
