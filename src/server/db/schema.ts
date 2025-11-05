@@ -9,7 +9,7 @@ export const workout = pgTable("workout", {
         .defaultNow()
         .$onUpdate(() => /* @__PURE__ */ new Date())
         .notNull(),
-    userId: uuid("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+    userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
 });
 
 export const exercise = pgTable("exercise", {

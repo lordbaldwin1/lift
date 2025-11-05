@@ -25,7 +25,7 @@ export default function Navbar() {
   } = authClient.useSession()
 
   function handleSignOut() {
-    signOut();
+    void signOut();
   }
 
   return (
@@ -33,6 +33,7 @@ export default function Navbar() {
       <div className="space-x-4">
         <Link href={"/"} className="text-xl">lift</Link>
         <Link href={"/workout"} className="hover:text-muted-foreground">workout</Link>
+        <Link href={"/workout/create"} className="hover:text-muted-foreground">create workout</Link>
       </div>
       <div className="flex flex-row items-center">
         <ThemeToggle />
