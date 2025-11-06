@@ -24,13 +24,13 @@ import {
 } from "~/components/ui/tooltip";
 import { exercise } from "~/server/db/schema";
 
-type Workout = {
+export type Workout = {
   id: string;
   title: string;
   description: string;
 };
 
-type Exercise = {
+export type Exercise = {
   id: string;
   name: string;
   order: number;
@@ -38,7 +38,7 @@ type Exercise = {
   note: string | undefined;
 };
 
-type ExerciseSet = {
+export type ExerciseSet = {
   id: string;
   order: number;
   reps: number | undefined;

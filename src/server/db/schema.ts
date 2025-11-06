@@ -12,6 +12,9 @@ export const workout = pgTable("workout", {
     userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
 });
 
+export type NewWorkout = typeof workout.$inferInsert;
+export type Workout = typeof workout.$inferSelect;
+
 export const exercise = pgTable("exercise", {
     id: uuid("id").primaryKey().defaultRandom(),
     name: text("name").notNull(),
