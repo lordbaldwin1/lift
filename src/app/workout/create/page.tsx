@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import type { Workout } from "../page";
+import type { Workout } from "../../../components/workout-tracker";
 import { createWorkout } from "~/server/actions/workout-actions";
 import { toast } from "sonner";
 
@@ -41,7 +41,6 @@ export default function WorkoutCreatePage() {
       toast.error(`${(err as Error).message}`);
       return;
     }
-    router.push("/workout");
   }
 
   return (

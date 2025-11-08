@@ -22,7 +22,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
-import { exercise } from "~/server/db/schema";
 
 export type Workout = {
   id: string;
@@ -45,29 +44,17 @@ export type ExerciseSet = {
   weight: number | undefined;
 };
 
-export default function WorkoutPage() {
-  const [workout, setWorkout] = useState<Workout>({
-    id: crypto.randomUUID(),
-    title: "pull day",
-    description:
-      "a super duper awesome pull day created by lordbaldwin1, the king of kings in the exercise gym guy world.",
-  });
-  const [exercises, setExercises] = useState<Exercise[]>([
-    {
-      id: crypto.randomUUID(),
-      name: "incline bench press",
-      order: 0,
-      sets: [
-        {
-          id: crypto.randomUUID(),
-          order: 0,
-          reps: undefined,
-          weight: undefined,
-        },
-      ],
-      note: undefined,
-    },
-  ]);
+type WorkoutTrackerProps = {
+  initialWorkout: Workout;
+  initialExercises: Exercise[];
+};
+
+export default function WorkoutTracker({
+  initialWorkout,
+  initialExercises,
+}: WorkoutTrackerProps) {
+  const [workout, setWorkout] = useState<Workout>(initialWorkout);
+  const [exercises, setExercises] = useState<Exercise[]>(initialExercises);
   const [exerciseToAdd, setExerciseToAdd] = useState<{
     name: string;
     position: number;
@@ -209,7 +196,10 @@ export default function WorkoutPage() {
             <div className="flex flex-row justify-between text-xl">
               <div className="flex flex-row items-center gap-2">
                 <h2>{exercise.name}</h2>
-                <Button variant={"ghost"} onClick={() => handleDeleteExercise(eIdx)}>
+                <Button
+                  variant={"ghost"}
+                  onClick={() => handleDeleteExercise(eIdx)}
+                >
                   <Trash size={18} />
                 </Button>
               </div>

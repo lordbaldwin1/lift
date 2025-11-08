@@ -4,14 +4,15 @@ import {
   selectSets,
   selectWorkout,
 } from "~/server/db/queries";
-import type { Exercise, ExerciseSet } from "../page";
+import type { Exercise } from "~/components/workout-tracker";
+import WorkoutTracker from "~/components/workout-tracker";
 
 export default async function WorkoutPage({
   params,
 }: {
-  params: { workoutId: string };
+  params: Promise<{ workoutId: string }>;
 }) {
-  const { workoutId } = params;
+  const { workoutId } = await params;
 
   const workout = await selectWorkout(workoutId);
   if (!workout) {
@@ -30,7 +31,9 @@ export default async function WorkoutPage({
       order: exercise.order,
       sets: [],
     };
+
     const sets = await selectSets(exercise.id);
+
     for (const set of sets) {
       tempExercise.sets.push({
         id: set.id,
@@ -39,11 +42,16 @@ export default async function WorkoutPage({
         weight: set.weight ?? undefined,
       });
     }
+
+    exerciseProp.push(tempExercise);
   }
 
   return (
     <div>
-      <h1>hi</h1>
+      <WorkoutTracker
+        initialWorkout={workout}
+        initialExercises={exerciseProp}
+      />
     </div>
   );
 }

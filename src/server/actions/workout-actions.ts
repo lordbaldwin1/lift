@@ -1,6 +1,6 @@
 "use server";
 
-import type { Workout } from "~/app/workout/page";
+import type { Workout } from "~/components/workout-tracker";
 import { headers } from "next/headers";
 import { auth } from "../auth/auth";
 import { insertWorkout } from "../db/queries";
