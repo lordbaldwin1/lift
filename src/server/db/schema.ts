@@ -32,7 +32,7 @@ export const set = pgTable("set", {
     id: uuid("id").primaryKey().defaultRandom(),
     reps: integer("reps"),
     weight: integer("weight"),
-    order: integer("order"),
+    order: integer("order").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
         .defaultNow()
