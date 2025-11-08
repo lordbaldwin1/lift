@@ -59,8 +59,20 @@ export default function WorkoutTracker({
     name: string;
     position: number;
   }>({ name: "", position: 0 });
+  const [loading, setLoading] = useState<boolean>(false);
 
   function handleAddSet(index: number) {
+    setLoading(true);
+
+    try {
+      // TODO ADD ACTION TO ADD SET
+    } catch (err) {
+      toast.error(`Failed to add set: ${(err as Error).message}`);
+      return;
+    } finally {
+      setLoading(false);
+    }
+
     const newExercises = [...exercises];
     if (newExercises[index]) {
       newExercises[index].sets.push({
@@ -75,20 +87,45 @@ export default function WorkoutTracker({
 
   function handleRemoveSet(eIdx: number, sIdx: number) {
     const newExercises = [...exercises];
-    if (newExercises[eIdx]) {
+
+    if (!newExercises[eIdx]) {
+      toast.error("Set doesn't exist");
+      return;
+    }
+
+    const setToRemove = newExercises[eIdx].sets[sIdx];
+    if (!setToRemove) {
+      toast.error("Couldn't find set");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // TODO: ADD ACTION TO REMOVE SET
+
       newExercises[eIdx] = {
         ...newExercises[eIdx],
         sets: newExercises[eIdx].sets.filter((_, idx) => idx !== sIdx),
       };
-      // update set order
+
       newExercises[eIdx] = {
         ...newExercises[eIdx],
-        sets: newExercises[eIdx].sets.map((set, i) => ({
-          ...set,
-          order: i,
-        })),
+        sets: newExercises[eIdx].sets.map((set, i) => {
+          // TODO: ADD ACTION TO UPDATE SET
+
+          return {
+            ...set,
+            order: i,
+          };
+        }),
       };
+
       setExercises(newExercises);
+    } catch (err) {
+      toast.error(`Failed to remove set: ${(err as Error).message}`);
+      return;
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -99,27 +136,35 @@ export default function WorkoutTracker({
     value: string,
   ) {
     const newExercises = [...exercises];
-    if (newExercises[eIdx]?.sets[sIdx]) {
-      const numValue = value === "" ? undefined : Number(value);
-      newExercises[eIdx] = {
-        ...newExercises[eIdx],
-        sets: newExercises[eIdx].sets.map((set, idx) =>
-          idx === sIdx ? { ...set, [field]: numValue } : set,
-        ),
-      };
-      setExercises(newExercises);
+
+    if (!newExercises[eIdx]?.sets[sIdx]) {
+      toast.error("Couldn't find set, try refreshing the page");
+      return;
     }
+
+    const numValue = value === "" ? undefined : Number(value);
+    newExercises[eIdx] = {
+      ...newExercises[eIdx],
+      sets: newExercises[eIdx].sets.map((set, idx) =>
+        idx === sIdx ? { ...set, [field]: numValue } : set,
+      ),
+    };
+
+    setExercises(newExercises);
   }
 
   function handleUpdateExerciseNote(eIdx: number, value: string) {
     const newExercises = [...exercises];
-    if (newExercises[eIdx]) {
-      newExercises[eIdx] = {
-        ...newExercises[eIdx],
-        note: value,
-      };
-      setExercises(newExercises);
+    if (!newExercises[eIdx]) {
+      toast.error("Failed to update exercise note.");
+      return;
     }
+
+    newExercises[eIdx] = {
+      ...newExercises[eIdx],
+      note: value,
+    };
+    setExercises(newExercises);
   }
 
   function handleAddExercise() {
