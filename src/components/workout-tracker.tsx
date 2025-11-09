@@ -148,6 +148,7 @@ export default function WorkoutTracker({
     }
 
     const setToRemove = newExercises[eIdx].sets[sIdx];
+
     if (!setToRemove) {
       toast.error("Couldn't find set");
       return;
@@ -156,6 +157,7 @@ export default function WorkoutTracker({
     setLoading(true);
     try {
       const deletedSet = await deleteSetAction(workout.userId, setToRemove.id);
+
       if (!deletedSet) {
         toast.error("Failed to delete set, please try again");
         return;
@@ -166,19 +168,10 @@ export default function WorkoutTracker({
         sets: newExercises[eIdx].sets.filter((_, idx) => idx !== sIdx),
       };
 
-      const updatedSets = newExercises[eIdx].sets.map((set, i) => ({
-        ...set,
-        order: i,
-      }));
-
-      newExercises[eIdx] = {
-        ...newExercises[eIdx],
-        sets: updatedSets,
-      };
-
-      await Promise.all(newExercises[eIdx].sets.map((set, i) => (
-        updateSetOrderAction(workout.userId, set.id, i)
-      )));
+      newExercises[eIdx].sets.forEach(async (set, i) => {
+        await updateSetOrderAction(workout.userId, set.id, i);
+        set.order = i;
+      });
 
       setExercises(newExercises);
     } catch (err) {
@@ -189,6 +182,7 @@ export default function WorkoutTracker({
     }
   }
 
+  // TODO ADD SERVER ACTION
   function handleUpdateSet(
     eIdx: number,
     sIdx: number,
@@ -213,6 +207,7 @@ export default function WorkoutTracker({
     setExercises(newExercises);
   }
 
+  // TODO ADD SERVER ACTION
   function handleUpdateExerciseNote(eIdx: number, value: string) {
     const newExercises = [...exercises];
     if (!newExercises[eIdx]) {
