@@ -41,6 +41,11 @@ export async function updateExerciseOrder(exercideId: string, order: number) {
   return row;
 }
 
+export async function deleteExercise(exercideId: string) {
+  const [row] = await db.delete(exercise).where(eq(exercise.id, exercideId)).returning();
+  return row;
+}
+
 export async function selectSets(exerciseId: string) {
   const rows = await db
     .select()

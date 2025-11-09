@@ -3,7 +3,7 @@
 import type { Exercise, Workout } from "~/components/workout-tracker";
 import { headers } from "next/headers";
 import { auth } from "../auth/auth";
-import { deleteSet, insertExercise, insertSet, insertWorkout, updateExerciseOrder, updateSetOrder } from "../db/queries";
+import { deleteExercise, deleteSet, insertExercise, insertSet, insertWorkout, updateExerciseOrder, updateSetOrder } from "../db/queries";
 import type { WorkoutTemplate } from "~/app/workout/create/page";
 import type { NewExercise, NewSet } from "../db/schema";
 
@@ -123,4 +123,21 @@ export async function updateSetOrderAction(userId: string, setId: string, order:
 
   const updatedSet = await updateSetOrder(setId, order);
   return updatedSet;
+}
+
+export async function deleteExerciseAction(userId: string, exerciseId: string) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("You must be signed in to delete exercises");
+  }
+
+  if (session.user.id !== userId) {
+    throw new Error("You cannot delete other peoples' exercises");
+  }
+
+  const deletedExercise = await deleteExercise(exerciseId);
+  return deletedExercise;
 }

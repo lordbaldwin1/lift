@@ -22,7 +22,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
-import { createExercise, createSet, deleteSetAction, updateExerciseOrderAction, updateSetOrderAction } from "~/server/actions/workout-actions";
+import { createExercise, createSet, deleteExerciseAction, deleteSetAction, updateExerciseOrderAction, updateSetOrderAction } from "~/server/actions/workout-actions";
 import type { DBExercise, Set } from "~/server/db/schema";
 
 export type Workout = {
@@ -227,7 +227,7 @@ export default function WorkoutTracker({
     setExercises(newExercises);
   }
 
-  function handleDeleteExercise(eIdx: number) {
+  async function handleDeleteExercise(eIdx: number) {
     const newExercises = [...exercises];
 
     if (!newExercises[eIdx]) {
@@ -235,21 +235,27 @@ export default function WorkoutTracker({
       return;
     }
 
-    const [deletedExercise] = newExercises.splice(eIdx, 1);
-
-    if (!deletedExercise) {
-      toast.error("Failed to delete exercise");
+    setLoading(true);
+    try {
+      const deletedExercise = await deleteExerciseAction(workout.userId, newExercises[eIdx].id);
+      if (!deletedExercise) {
+        toast.error("Failed to delete exercise, please try again");
+        return;
+      }
+    } catch (err) {
+      toast.error(`Error: ${(err as Error).message}`);
       return;
+    } finally {
+      setLoading(false);
     }
 
-    const setsToDelete = deletedExercise.sets;
+    newExercises.splice(eIdx, 1);
 
-    // update exercise order
-    newExercises.forEach((exercise, i) => {
+    newExercises.forEach(async (exercise, i) => {
+      await updateExerciseOrderAction(workout.userId, exercise.id, i);
       exercise.order = i;
     });
 
-    // add server action to delete exercises and sets from db
     setExercises(newExercises);
   }
 
