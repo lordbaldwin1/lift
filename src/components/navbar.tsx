@@ -32,7 +32,7 @@ export default function Navbar() {
     <section className="flex flex-row items-center justify-between">
       <div className="space-x-4">
         <Link href={"/"} className="text-xl">lift</Link>
-        <Link href={"/workout"} className="hover:text-muted-foreground">workout</Link>
+        <Link href={"/workout"} className="hover:text-muted-foreground">workouts</Link>
         <Link href={"/workout/create"} className="hover:text-muted-foreground">create workout</Link>
       </div>
       <div className="flex flex-row items-center">

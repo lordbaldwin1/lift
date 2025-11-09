@@ -27,8 +27,9 @@ export default async function WorkoutPage({
     const tempExercise: Exercise = {
       id: exercise.id,
       name: exercise.name,
-      note: exercise.name,
+      note: exercise.note ?? undefined,
       order: exercise.order,
+      workoutId: workout.id,
       sets: [],
     };
 
@@ -38,6 +39,7 @@ export default async function WorkoutPage({
       tempExercise.sets.push({
         id: set.id,
         order: set.order,
+        exerciseId: tempExercise.id,
         reps: set.reps ?? undefined,
         weight: set.weight ?? undefined,
       });

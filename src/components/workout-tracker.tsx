@@ -22,17 +22,21 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
+import { createExercise, createSet, deleteSetAction, updateExerciseOrderAction, updateSetOrderAction } from "~/server/actions/workout-actions";
+import type { DBExercise, Set } from "~/server/db/schema";
 
 export type Workout = {
   id: string;
   title: string;
   description: string;
+  userId: string;
 };
 
 export type Exercise = {
   id: string;
   name: string;
   order: number;
+  workoutId: string;
   sets: ExerciseSet[];
   note: string | undefined;
 };
@@ -40,6 +44,7 @@ export type Exercise = {
 export type ExerciseSet = {
   id: string;
   order: number;
+  exerciseId: string;
   reps: number | undefined;
   weight: number | undefined;
 };
@@ -61,11 +66,62 @@ export default function WorkoutTracker({
   }>({ name: "", position: 0 });
   const [loading, setLoading] = useState<boolean>(false);
 
-  function handleAddSet(index: number) {
+  async function handleAddExercise() {
+    if (exerciseToAdd.name.length === 0) {
+      toast.error("You must enter an exercise name");
+      return;
+    }
+    const newExercises = [...exercises];
+
+    let newExercise: DBExercise | undefined;
+    setLoading(true);
+    try {
+      newExercise = await createExercise(workout.userId, exerciseToAdd.name, exerciseToAdd.position, workout.id);
+      if (!newExercise) {
+        toast.error("Failed to add exercise, please try again");
+        return;
+      }
+    } catch (err) {
+      toast.error(`Error: ${(err as Error).message}`);
+      return;
+    } finally {
+      setLoading(false);
+    }
+
+    newExercises.splice(newExercise.order, 0, {
+      id: newExercise.id,
+      name: newExercise.name,
+      order: newExercise.order,
+      workoutId: newExercise.workoutId,
+      sets: [],
+      note: newExercise.note ?? undefined,
+    });
+
+    newExercises.forEach(async (exercise, i) => {
+      exercise.order = i;
+      await updateExerciseOrderAction(workout.userId, exercise.id, i);
+    });
+    setExercises(newExercises);
+    setExerciseToAdd({ name: "", position: 0 });
+  }
+
+  async function handleAddSet(index: number) {
     setLoading(true);
 
+    const newExercises = [...exercises];
+
+    if (!newExercises[index]) {
+      toast.error("No exercise to add set to");
+      return;
+    }
+
+    let newSet: Set | undefined;
     try {
-      // TODO ADD ACTION TO ADD SET
+      newSet = await createSet(workout.userId, newExercises[index], newExercises[index].sets.length);
+      if (!newSet) {
+        toast.error("Failed to add set, please try again");
+        return;
+      }
     } catch (err) {
       toast.error(`Failed to add set: ${(err as Error).message}`);
       return;
@@ -73,19 +129,17 @@ export default function WorkoutTracker({
       setLoading(false);
     }
 
-    const newExercises = [...exercises];
-    if (newExercises[index]) {
-      newExercises[index].sets.push({
-        id: crypto.randomUUID(),
-        order: newExercises[index].sets.length - 1,
-        reps: undefined,
-        weight: undefined,
-      });
-      setExercises(newExercises);
-    }
+    newExercises[index].sets.push({
+      id: newSet.id,
+      order: newSet.order,
+      exerciseId: newSet.exerciseId,
+      reps: newSet.reps ?? undefined,
+      weight: newSet.weight ?? undefined,
+    });
+    setExercises(newExercises);
   }
 
-  function handleRemoveSet(eIdx: number, sIdx: number) {
+  async function handleRemoveSet(eIdx: number, sIdx: number) {
     const newExercises = [...exercises];
 
     if (!newExercises[eIdx]) {
@@ -101,24 +155,30 @@ export default function WorkoutTracker({
 
     setLoading(true);
     try {
-      // TODO: ADD ACTION TO REMOVE SET
+      const deletedSet = await deleteSetAction(workout.userId, setToRemove.id);
+      if (!deletedSet) {
+        toast.error("Failed to delete set, please try again");
+        return;
+      }
 
       newExercises[eIdx] = {
         ...newExercises[eIdx],
         sets: newExercises[eIdx].sets.filter((_, idx) => idx !== sIdx),
       };
 
+      const updatedSets = newExercises[eIdx].sets.map((set, i) => ({
+        ...set,
+        order: i,
+      }));
+
       newExercises[eIdx] = {
         ...newExercises[eIdx],
-        sets: newExercises[eIdx].sets.map((set, i) => {
-          // TODO: ADD ACTION TO UPDATE SET
-
-          return {
-            ...set,
-            order: i,
-          };
-        }),
+        sets: updatedSets,
       };
+
+      await Promise.all(newExercises[eIdx].sets.map((set, i) => (
+        updateSetOrderAction(workout.userId, set.id, i)
+      )));
 
       setExercises(newExercises);
     } catch (err) {
@@ -165,41 +225,6 @@ export default function WorkoutTracker({
       note: value,
     };
     setExercises(newExercises);
-  }
-
-  function handleAddExercise() {
-    if (exerciseToAdd.name.length === 0) {
-      toast.error("you must enter an exercise name");
-      return;
-    }
-    const newExercises = [...exercises];
-
-    if (exerciseToAdd.position > 0) {
-      newExercises.splice(exerciseToAdd.position, 0, {
-        id: crypto.randomUUID(),
-        name: exerciseToAdd.name,
-        order:
-          exerciseToAdd.position > 0
-            ? exerciseToAdd.position
-            : newExercises.length - 1,
-        sets: [],
-        note: undefined,
-      });
-    } else {
-      newExercises.unshift({
-        id: crypto.randomUUID(),
-        name: exerciseToAdd.name,
-        order: 0,
-        sets: [],
-        note: undefined,
-      });
-    }
-
-    newExercises.forEach((exercise, i) => {
-      exercise.order = i;
-    });
-    setExercises(newExercises);
-    setExerciseToAdd({ name: "", position: 0 });
   }
 
   function handleDeleteExercise(eIdx: number) {

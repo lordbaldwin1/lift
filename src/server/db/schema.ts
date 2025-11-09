@@ -28,6 +28,9 @@ export const exercise = pgTable("exercise", {
     workoutId: uuid("workout_id").notNull().references(() => workout.id, { onDelete: "cascade" }),
 });
 
+export type NewExercise = typeof exercise.$inferInsert;
+export type DBExercise = typeof exercise.$inferSelect;
+
 export const set = pgTable("set", {
     id: uuid("id").primaryKey().defaultRandom(),
     reps: integer("reps"),
@@ -40,6 +43,9 @@ export const set = pgTable("set", {
         .notNull(),
     exerciseId: uuid("exercise_id").notNull().references(() => exercise.id, { onDelete: "cascade" }),
 });
+
+export type NewSet = typeof set.$inferInsert;
+export type Set = typeof set.$inferSelect;
 
 export const user = pgTable("user", {
     id: text("id").primaryKey(),

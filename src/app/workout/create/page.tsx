@@ -12,19 +12,20 @@ import type { Workout } from "../../../components/workout-tracker";
 import { createWorkout } from "~/server/actions/workout-actions";
 import { toast } from "sonner";
 
-const templates: Workout[] = [
+export type WorkoutTemplate = {
+  title: string;
+  description: string;
+}
+const templates: WorkoutTemplate[] = [
   {
-    id: "push-day",
     title: "push day",
     description: "chest, shoulders, and triceps",
   },
   {
-    id: "pull-day",
     title: "pull day",
     description: "back and biceps",
   },
   {
-    id: "leg-day",
     title: "leg day",
     description: "quads, hamstrings, and calves",
   },
@@ -33,7 +34,7 @@ const templates: Workout[] = [
 export default function WorkoutCreatePage() {
   const router = useRouter();
 
-  async function handleSelectTemplate(template: Workout) {
+  async function handleSelectTemplate(template: WorkoutTemplate) {
     try {
       const newWorkout = await createWorkout(template);
       router.push(`/workout/${newWorkout.id}`);
@@ -55,7 +56,7 @@ export default function WorkoutCreatePage() {
       <div className="grid w-full gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {templates.map((template) => (
           <Card
-            key={template.id}
+            key={template.title}
             className="hover:border-primary transition-colors cursor-pointer"
             onClick={() => handleSelectTemplate(template)}
           >
