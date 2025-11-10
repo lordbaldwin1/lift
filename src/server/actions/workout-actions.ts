@@ -1,9 +1,9 @@
 "use server";
 
-import type { Exercise, Workout } from "~/components/workout-tracker";
+import type { Exercise, ExerciseSet, Workout } from "~/components/workout-tracker";
 import { headers } from "next/headers";
 import { auth } from "../auth/auth";
-import { deleteExercise, deleteSet, insertExercise, insertSet, insertWorkout, updateExerciseOrder, updateSetOrder } from "../db/queries";
+import { completeWorkout, deleteExercise, deleteSet, insertExercise, insertSet, insertWorkout, updateExerciseNote, updateExerciseOrder, updateSet, updateSetOrder } from "../db/queries";
 import type { WorkoutTemplate } from "~/app/workout/create/page";
 import type { NewExercise, NewSet } from "../db/schema";
 
@@ -140,4 +140,54 @@ export async function deleteExerciseAction(userId: string, exerciseId: string) {
 
   const deletedExercise = await deleteExercise(exerciseId);
   return deletedExercise;
+}
+
+export async function updateSetAction(userId: string, set: ExerciseSet) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("You must be signed in to update sets");
+  }
+
+  if (session.user.id !== userId) {
+    throw new Error("You cannot update other peoples' sets");
+  }
+
+  const updatedSet = await updateSet(set.id, set.reps ?? null, set.weight ?? null);
+  return updatedSet;
+}
+
+export async function updateExerciseNoteAction(userId: string, exercideId: string, note: string | null) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("You must be signed in to update your exercise notes");
+  }
+
+  if (session.user.id !== userId) {
+    throw new Error("You cannot update other peoples' exercise notes");
+  }
+
+  const updatedExercise = await updateExerciseNote(exercideId, note);
+  return updatedExercise;
+}
+
+export async function completeWorkoutAction(userId: string, exercises: Exercise[]) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("You must be signed in to complete a workout");
+  }
+
+  if (session.user.id !== userId) {
+    throw new Error("You cannot complete other peoples' workouts");
+  }
+
+  await completeWorkout(exercises);
 }

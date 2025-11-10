@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { db } from ".";
 import type { NewExercise, NewSet, NewWorkout } from "./schema";
 import { exercise, set, workout } from "./schema";
+import type { Exercise } from "~/components/workout-tracker";
 
 export async function insertWorkout(newWorkout: NewWorkout) {
   const [row] = await db.insert(workout).values(newWorkout).returning();
@@ -41,6 +42,13 @@ export async function updateExerciseOrder(exercideId: string, order: number) {
   return row;
 }
 
+export async function updateExerciseNote(exerciseId: string, note: string | null) {
+  const [row] = await db.update(exercise).set({
+    note: note,
+  }).where(eq(exercise.id, exerciseId)).returning();
+  return row;
+}
+
 export async function deleteExercise(exercideId: string) {
   const [row] = await db.delete(exercise).where(eq(exercise.id, exercideId)).returning();
   return row;
@@ -69,4 +77,48 @@ export async function updateSetOrder(setId: string, order: number) {
 export async function insertSet(newSet: NewSet) {
   const [row] = await db.insert(set).values(newSet).returning();
   return row;
+}
+
+export async function updateSet(setId: string, reps: number | null, weight: number | null) {
+  const [row] = await db.update(set).set({
+    reps: reps,
+    weight: weight
+  }).where(eq(set.id, setId)).returning();
+  return row;
+}
+
+export async function completeWorkout(exercises: Exercise[]) {
+  for (const e of exercises) {
+    await db.insert(exercise).values({
+      id: e.id,
+      name: e.name,
+      note: e.note,
+      order: e.order,
+      workoutId: e.workoutId,
+    }).onConflictDoUpdate({
+      target: exercise.id,
+      set: {
+        name: e.name,
+        note: e.note,
+        order: e.order,
+      }
+    });
+
+    for (const s of e.sets) {
+      await db.insert(set).values({
+        id: s.id,
+        reps: s.reps,
+        weight: s.weight,
+        order: s.order,
+        exerciseId: s.exerciseId
+      }).onConflictDoUpdate({
+        target: set.id,
+        set: {
+          reps: s.reps,
+          weight: s.weight,
+          order: s.order,
+        }
+      });
+    }
+  }
 }

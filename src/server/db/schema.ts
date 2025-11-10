@@ -1,9 +1,14 @@
-import { pgTable, text, timestamp, boolean, uuid, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, uuid, integer, pgEnum } from "drizzle-orm/pg-core";
+
+const sentimentEnum = pgEnum("sentiment", ["good", "medium", "bad"]);
 
 export const workout = pgTable("workout", {
     id: uuid("id").primaryKey().defaultRandom(),
     title: text("title").notNull(),
     description: text("description").notNull(),
+    completed: boolean("completed").default(false).notNull(),
+    completedAt: timestamp("completed_at").notNull().defaultNow(),
+    sentiment: sentimentEnum("sentiment").default("medium"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at")
         .defaultNow()
@@ -13,13 +18,15 @@ export const workout = pgTable("workout", {
 });
 
 export type NewWorkout = typeof workout.$inferInsert;
-export type Workout = typeof workout.$inferSelect;
+export type DBWorkout = typeof workout.$inferSelect;
 
 export const exercise = pgTable("exercise", {
     id: uuid("id").primaryKey().defaultRandom(),
     name: text("name").notNull(),
     note: text("note"),
     order: integer("order").notNull(),
+    repLowerBound: integer("rep_lower_bound"),
+    repUpperBound: integer("rep_upper_bound"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
         .defaultNow()
@@ -35,6 +42,8 @@ export const set = pgTable("set", {
     id: uuid("id").primaryKey().defaultRandom(),
     reps: integer("reps"),
     weight: integer("weight"),
+    targetReps: integer("target_reps"),
+    targetWeight: integer("target_weight"),
     order: integer("order").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
@@ -45,7 +54,7 @@ export const set = pgTable("set", {
 });
 
 export type NewSet = typeof set.$inferInsert;
-export type Set = typeof set.$inferSelect;
+export type DBSet = typeof set.$inferSelect;
 
 export const user = pgTable("user", {
     id: text("id").primaryKey(),
