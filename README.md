@@ -18,7 +18,11 @@ my personal hypertrophy training app
 - [x] add target weight/reps to sets table
 - [x] add rep upper/lower bounds to exercise table
 - [x] add workout sentiment to workout table (good, medium, bad) for how user felt about that workout
-- [ ] add complete workout functionality with optional date picker
+- [x] add complete workout functionality with optional date picker
+- [x] add rating workout sentiment in completed workout page
+- [ ] add loading states to workout-tracker and rate-workout
+- [ ] refactor workout-tracker logic into custom hook
+- [ ] break workout-tracker into multiple components (maybe?)
 - [ ] create view completed workouts ui w/ github like activity graph, showing sentiment with emoji
 
 
