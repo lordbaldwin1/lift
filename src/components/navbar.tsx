@@ -15,13 +15,12 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu"
 import { authClient, signOut } from "~/server/auth/auth-client";
+import Image from "next/image";
 
 export default function Navbar() {
   const {
     data: session,
     isPending,
-    error, //error object
-    refetch //refetch the session
   } = authClient.useSession()
 
   function handleSignOut() {
@@ -43,7 +42,11 @@ export default function Navbar() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant={"link"} className="hover:text-muted-foreground">
-                <UserRound />
+                {
+                  session.user.image
+                    ? <Image src={session.user.image} alt="your profile picture" width={25} height={25} className="rounded-full" />
+                    : <UserRound />
+                }
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

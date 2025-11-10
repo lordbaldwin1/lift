@@ -3,9 +3,9 @@
 import type { Exercise, ExerciseSet, Workout } from "~/components/workout-tracker";
 import { headers } from "next/headers";
 import { auth } from "../auth/auth";
-import { completeWorkout, deleteExercise, deleteSet, insertExercise, insertSet, insertWorkout, updateExerciseNote, updateExerciseOrder, updateSet, updateSetOrder } from "../db/queries";
+import { completeWorkout, deleteExercise, deleteSet, insertExercise, insertSet, insertWorkout, updateExerciseNote, updateExerciseOrder, updateSet, updateSetOrder, updateWorkoutSentiment } from "../db/queries";
 import type { WorkoutTemplate } from "~/app/workout/create/page";
-import type { NewExercise, NewSet } from "../db/schema";
+import type { NewExercise, NewSet, Sentiment } from "../db/schema";
 
 export async function createWorkout(workout: WorkoutTemplate) {
   const session = await auth.api.getSession({
@@ -176,7 +176,7 @@ export async function updateExerciseNoteAction(userId: string, exercideId: strin
   return updatedExercise;
 }
 
-export async function completeWorkoutAction(userId: string, exercises: Exercise[]) {
+export async function completeWorkoutAction(userId: string, exercises: Exercise[], workoutId: string, workoutDate: Date) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -189,5 +189,22 @@ export async function completeWorkoutAction(userId: string, exercises: Exercise[
     throw new Error("You cannot complete other peoples' workouts");
   }
 
-  await completeWorkout(exercises);
+  await completeWorkout(exercises, workoutId, workoutDate);
+}
+
+export async function updateWorkoutSentimentAction(userId: string, workoudId: string, sentiment: Sentiment) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("You must be signed in update a workout sentiment");
+  }
+
+  if (session.user.id !== userId) {
+    throw new Error("You cannot update other peoples' workout sentiments");
+  }
+
+  const updatedWorkout = await updateWorkoutSentiment(workoudId, sentiment);
+  return updatedWorkout;
 }

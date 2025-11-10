@@ -2,13 +2,15 @@ import { pgTable, text, timestamp, boolean, uuid, integer, pgEnum } from "drizzl
 
 const sentimentEnum = pgEnum("sentiment", ["good", "medium", "bad"]);
 
+export type Sentiment = "good" | "medium" | "bad";
+
 export const workout = pgTable("workout", {
     id: uuid("id").primaryKey().defaultRandom(),
     title: text("title").notNull(),
     description: text("description").notNull(),
     completed: boolean("completed").default(false).notNull(),
-    completedAt: timestamp("completed_at").notNull().defaultNow(),
-    sentiment: sentimentEnum("sentiment").default("medium"),
+    completedAt: timestamp("completed_at"),
+    sentiment: sentimentEnum("sentiment").default("medium").notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at")
         .defaultNow()

@@ -19,7 +19,7 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 import { completeWorkoutAction, createExercise, createSet, deleteExerciseAction, deleteSetAction, updateExerciseNoteAction, updateExerciseOrderAction, updateSetAction, updateSetOrderAction } from "~/server/actions/workout-actions";
-import type { DBExercise, DBSet } from "~/server/db/schema";
+import type { DBExercise, DBSet, Sentiment } from "~/server/db/schema";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Calendar } from "./ui/calendar";
 
@@ -27,6 +27,8 @@ export type Workout = {
   id: string;
   title: string;
   description: string;
+  sentiment: Sentiment | null;
+  completed: boolean;
   userId: string;
 };
 
@@ -63,8 +65,8 @@ export default function WorkoutTracker({
     position: number;
   }>({ name: "", position: 0 });
   const [loading, setLoading] = useState<boolean>(false);
-  const [open, setOpen] = useState(false)
-  const [date, setDate] = useState<Date | undefined>(new Date())
+  const [workoutCompleteOpen, setWorkoutCompleteOpen] = useState(false)
+  const [workoutDate, setWorkoutDate] = useState<Date | undefined>(new Date())
 
   const router = useRouter();
 
@@ -303,14 +305,19 @@ export default function WorkoutTracker({
   async function handleCompleteWorkout() {
     setLoading(true);
     try {
-      await completeWorkoutAction(workout.userId, exercises);
-      router.push(`/workout/complete/${workout.id}`);
+      await completeWorkoutAction(workout.userId, exercises, workout.id, workoutDate ?? new Date());
+      router.push(`/workout/completed/${workout.id}`);
     } catch (err) {
       toast.error(`Error: ${(err as Error).message}`);
       return;
     } finally {
       setLoading(false);
     }
+
+    setWorkout({
+      ...workout,
+      completed: true,
+    })
   }
 
   return (
@@ -329,6 +336,7 @@ export default function WorkoutTracker({
                 <Button
                   variant={"ghost"}
                   onClick={() => handleDeleteExercise(eIdx)}
+                  disabled={workout.completed}
                 >
                   <Trash size={18} />
                 </Button>
@@ -351,29 +359,32 @@ export default function WorkoutTracker({
                     onChange={(e) =>
                       handleUpdateSet(eIdx, sIdx, "weight", e.target.value)
                     }
+                    disabled={workout.completed}
                   />
                   <Input
                     className="w-[75]"
                     placeholder="reps..."
                     value={set.reps ?? ""}
                     type="number"
+                    onBlur={() => onBlurSaveSet(eIdx, sIdx)}
                     onChange={(e) =>
                       handleUpdateSet(eIdx, sIdx, "reps", e.target.value)
                     }
+                    disabled={workout.completed}
                   />
-                  <Button variant={"ghost"} onClick={() => handleRemoveSet(eIdx, sIdx)}>
+                  <Button variant={"ghost"} onClick={() => handleRemoveSet(eIdx, sIdx)} disabled={workout.completed}>
                     <Trash />
                   </Button>
                 </div>
               </div>
             ))}
             <div className="flex items-center justify-center mt-8">
-              <Button variant={"outline"} className="w-1/4 rounded-none rounded-l-lg" onClick={() => handleAddSet(eIdx)}>
+              <Button variant={"outline"} className="w-1/4 rounded-none rounded-l-lg" onClick={() => handleAddSet(eIdx)} disabled={workout.completed}>
                 new set
               </Button>
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button variant={"outline"} className="w-1/4 rounded-none rounded-r-lg">
+                  <Button variant={"outline"} className="w-1/4 rounded-none rounded-r-lg" disabled={workout.completed}>
                     add note
                   </Button>
                 </DialogTrigger>
@@ -389,6 +400,7 @@ export default function WorkoutTracker({
                     value={exercises[eIdx]?.note}
                     onChange={(e) => handleUpdateExerciseNote(eIdx, e.target.value)}
                     placeholder={`felt great today, hit a PR on my top set...`}
+                    disabled={workout.completed}
                   />
                   <DialogFooter>
                     <DialogClose asChild>
@@ -396,7 +408,7 @@ export default function WorkoutTracker({
                         <Button type="button" variant="secondary">
                           close
                         </Button>
-                        <Button type="submit" onClick={() => handleSaveExerciseNote(eIdx)}>save note</Button>
+                        <Button type="submit" onClick={() => handleSaveExerciseNote(eIdx)} disabled={workout.completed}>save note</Button>
                       </div>
                     </DialogClose>
                   </DialogFooter>
@@ -408,7 +420,7 @@ export default function WorkoutTracker({
         <div className="flex flex-col items-center space-y-2">
           <Dialog>
             <DialogTrigger asChild>
-              <Button className="w-1/4">
+              <Button className="w-1/4" disabled={workout.completed}>
                 add exercise
               </Button>
             </DialogTrigger>
@@ -435,6 +447,7 @@ export default function WorkoutTracker({
                       }))
                     }
                     placeholder="incline dumbell press"
+                    disabled={workout.completed}
                   />
                 </div>
               </div>
@@ -453,6 +466,7 @@ export default function WorkoutTracker({
                           position: i,
                         }))
                       }
+                      disabled={workout.completed}
                     >
                       <ArrowUp />
                     </Button>
@@ -467,6 +481,7 @@ export default function WorkoutTracker({
                           position: i + 1,
                         }))
                       }
+                      disabled={workout.completed}
                     >
                       <ArrowDown />
                     </Button>
@@ -479,14 +494,14 @@ export default function WorkoutTracker({
                     close
                   </Button>
                 </DialogClose>
-                <Button onClick={handleAddExercise}>add exercise</Button>
+                <Button onClick={handleAddExercise} disabled={workout.completed}>add exercise</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
 
           <Dialog>
             <DialogTrigger asChild>
-              <Button className="w-1/4">
+              <Button className="w-1/4" disabled={workout.completed}>
                 complete workout
               </Button>
             </DialogTrigger>
@@ -498,26 +513,28 @@ export default function WorkoutTracker({
                 </DialogDescription>
               </DialogHeader>
               <div className="flex flex-col gap-3">
-                <Popover open={open} onOpenChange={setOpen}>
+                <Popover open={workoutCompleteOpen} onOpenChange={setWorkoutCompleteOpen}>
+                  <Label htmlFor="date" className="px-1 w-24">workout date</Label>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
                       id="date"
                       className="w-48 justify-between font-normal"
                     >
-                      {date ? date.toLocaleDateString() : "Select date"}
+                      {workoutDate ? workoutDate.toLocaleDateString() : "select date"}
                       <ChevronDownIcon />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto overflow-hidden p-0" align="start">
                     <Calendar
                       mode="single"
-                      selected={date}
+                      selected={workoutDate}
                       captionLayout="dropdown"
                       onSelect={(date) => {
-                        setDate(date)
-                        setOpen(false)
+                        setWorkoutDate(date)
+                        setWorkoutCompleteOpen(false)
                       }}
+                      hidden={{ after: new Date() }}
                     />
                   </PopoverContent>
                 </Popover>
@@ -528,7 +545,7 @@ export default function WorkoutTracker({
                     <Button type="button" variant="secondary">
                       close
                     </Button>
-                    <Button variant={"destructive"} onClick={handleCompleteWorkout}>
+                    <Button variant={"destructive"} onClick={handleCompleteWorkout} disabled={workout.completed}>
                       complete workout
                     </Button>
                   </div>

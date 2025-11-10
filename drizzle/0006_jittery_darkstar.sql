@@ -1,0 +1,1 @@
+ALTER TABLE "workout" ALTER COLUMN "sentiment" SET NOT NULL;

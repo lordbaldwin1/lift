@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db } from ".";
-import type { NewExercise, NewSet, NewWorkout } from "./schema";
+import type { NewExercise, NewSet, NewWorkout, Sentiment } from "./schema";
 import { exercise, set, workout } from "./schema";
 import type { Exercise } from "~/components/workout-tracker";
 
@@ -87,7 +87,7 @@ export async function updateSet(setId: string, reps: number | null, weight: numb
   return row;
 }
 
-export async function completeWorkout(exercises: Exercise[]) {
+export async function completeWorkout(exercises: Exercise[], workoutId: string, workoutDate: Date) {
   for (const e of exercises) {
     await db.insert(exercise).values({
       id: e.id,
@@ -121,4 +121,15 @@ export async function completeWorkout(exercises: Exercise[]) {
       });
     }
   }
+  await db.update(workout).set({
+    completed: true,
+    completedAt: workoutDate,
+  }).where(eq(workout.id, workoutId));
+}
+
+export async function updateWorkoutSentiment(workoudId: string, sentiment: Sentiment) {
+  const [row] = await db.update(workout).set({
+    sentiment: sentiment,
+  }).where(eq(workout.id, workoudId)).returning();
+  return row;
 }
