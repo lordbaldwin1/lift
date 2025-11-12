@@ -18,12 +18,20 @@ import {
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
-import { completeWorkoutAction, createExercise, createSet, deleteExerciseAction, deleteSetAction, updateExerciseNoteAction, updateExerciseOrderAction, updateSetAction, updateSetOrderAction } from "~/server/actions/workout-actions";
-import type { DBExercise, DBSet, DBWorkout, Sentiment } from "~/server/db/schema";
+import {
+  completeWorkoutAction,
+  createExercise,
+  createSet,
+  deleteExerciseAction,
+  deleteSetAction,
+  updateExerciseNoteAction,
+  updateSetAction,
+  updateSetOrderAction,
+} from "~/server/actions/workout-actions";
+import type { DBExercise, DBSet, DBWorkout } from "~/server/db/schema";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Calendar } from "./ui/calendar";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
 
 type WorkoutTrackerProps = {
   initialWorkout: DBWorkout;
@@ -36,34 +44,34 @@ export default function WorkoutTracker({
   initialExercises,
   initialSets,
 }: WorkoutTrackerProps) {
-  const [workout, setWorkout] = useState<DBWorkout>(initialWorkout);
-  const [exercises, setExercises] = useState<DBExercise[]>(initialExercises);
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const workoutId = initialWorkout.id;
+  const userId = initialWorkout.userId;
+
   const [exerciseToAdd, setExerciseToAdd] = useState<{
     name: string;
     position: number;
   }>({ name: "", position: 0 });
-  const [loading, setLoading] = useState<boolean>(false);
   const [workoutCompleteOpen, setWorkoutCompleteOpen] = useState(false);
   const [workoutDate, setWorkoutDate] = useState<Date | undefined>(new Date());
-  const router = useRouter();
 
-  const queryClient = useQueryClient();
-  const workoutId = initialWorkout.id;
+  const [localExerciseNotes, setLocalExerciseNotes] = useState<Record<string, string>>({});
 
   async function fetchExercises() {
     const response = await fetch(`/api/workouts/${workoutId}/exercises`);
     if (!response.ok) {
       throw new Error("Failed to fetch exercises");
     }
-    return response.json();
+    return (await response.json()) as DBExercise[];
   }
 
   async function fetchSets() {
     const response = await fetch(`/api/workouts/${workoutId}/sets`);
     if (!response.ok) {
-      throw new Error("Failed to fetch exercises");
+      throw new Error("Failed to fetch sets");
     }
-    return response.json();
+    return (await response.json()) as DBSet[];
   }
 
   const { data: exercises = [] } = useQuery({
@@ -80,371 +88,440 @@ export default function WorkoutTracker({
     staleTime: Infinity,
   });
 
-  const addExerciseMutation = useMutation({
-    mutationFn: async (params: { name: string, order: number }) => {
-      const newExercise = await createExercise(workout.userId, params.name, params.order, workoutId);
-      return newExercise;
-    },
+  function getSetsForExercise(exerciseId: string): DBSet[] {
+    return sets.filter(set => set.exerciseId === exerciseId).sort((a, b) => a.order - b.order);
+  }
 
+  const addExerciseMutation = useMutation({
+    mutationFn: async (params: { name: string; order: number }) => {
+      return await createExercise(userId, params.name, params.order, workoutId);
+    },
     onMutate: async ({ name, order }) => {
       await queryClient.cancelQueries({ queryKey: ["exercises", workoutId] });
-      const previousExercises = queryClient.getQueryData(["exercises", workoutId]);
-
+      const previousExercises = queryClient.getQueryData<DBExercise[]>(["exercises", workoutId]);
       
-    }
-  })
+      // optimistically update cache
+      queryClient.setQueryData<DBExercise[]>(["exercises", workoutId], (old = []) => {
+        const newExercise: DBExercise = {
+          id: `temp-${Date.now()}`,
+          name,
+          order,
+          workoutId,
+          note: null,
+          repLowerBound: null,
+          repUpperBound: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        const updated = [...old];
+        updated.splice(order, 0, newExercise);
+        return updated.map((ex, idx) => ({ ...ex, order: idx }));
+      });
+      
+      return { previousExercises };
+    },
+    onError: (err, _, context) => {
+      if (context?.previousExercises) {
+        queryClient.setQueryData(["exercises", workoutId], context.previousExercises);
+      }
+      toast.error(`Failed to add exercise: ${err.message}`);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["exercises", workoutId] });
+    },
+  });
 
-  async function handleAddExercise() {
+  const deleteExerciseMutation = useMutation({
+    mutationFn: async (exerciseId: string) => {
+      return await deleteExerciseAction(userId, exerciseId);
+    },
+    onMutate: async (exerciseId) => {
+      await queryClient.cancelQueries({ queryKey: ["exercises", workoutId] });
+      const previousExercises = queryClient.getQueryData<DBExercise[]>(["exercises", workoutId]);
+      
+      queryClient.setQueryData<DBExercise[]>(["exercises", workoutId], (old = []) => {
+        return old.filter(ex => ex.id !== exerciseId).map((ex, idx) => ({ ...ex, order: idx }));
+      });
+      
+      return { previousExercises };
+    },
+    onError: (err, _, context) => {
+      if (context?.previousExercises) {
+        queryClient.setQueryData(["exercises", workoutId], context.previousExercises);
+      }
+      toast.error(`Failed to delete exercise: ${err.message}`);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["exercises", workoutId] });
+      await queryClient.invalidateQueries({ queryKey: ["sets", workoutId] });
+    },
+  });
+
+  const updateExerciseNoteMutation = useMutation({
+    mutationFn: async (params: { exerciseId: string; note: string | null }) => {
+      return await updateExerciseNoteAction(userId, params.exerciseId, params.note);
+    },
+    onMutate: async ({ exerciseId, note }) => {
+      await queryClient.cancelQueries({ queryKey: ["exercises", workoutId] });
+      const previousExercises = queryClient.getQueryData<DBExercise[]>(["exercises", workoutId]);
+      
+      queryClient.setQueryData<DBExercise[]>(["exercises", workoutId], (old = []) => {
+        return old.map(ex => ex.id === exerciseId ? { ...ex, note } : ex);
+      });
+      
+      return { previousExercises };
+    },
+    onError: (err, _, context) => {
+      if (context?.previousExercises) {
+        queryClient.setQueryData(["exercises", workoutId], context.previousExercises);
+      }
+      toast.error(`Failed to save note: ${err.message}`);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["exercises", workoutId] });
+    },
+  });
+
+  const addSetMutation = useMutation({
+    mutationFn: async (params: { exerciseId: string; order: number }) => {
+      const exercise = exercises.find(ex => ex.id === params.exerciseId);
+      if (!exercise) throw new Error("Exercise not found");
+      return await createSet(userId, exercise, params.order);
+    },
+    onMutate: async ({ exerciseId, order }) => {
+      await queryClient.cancelQueries({ queryKey: ["sets", workoutId] });
+      const previousSets = queryClient.getQueryData<DBSet[]>(["sets", workoutId]);
+      
+      queryClient.setQueryData<DBSet[]>(["sets", workoutId], (old = []) => {
+        const newSet: DBSet = {
+          id: `temp-${Date.now()}`,
+          exerciseId,
+          order,
+          reps: null,
+          weight: null,
+          targetReps: null,
+          targetWeight: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        return [...old, newSet];
+      });
+      
+      return { previousSets };
+    },
+    onError: (err, _, context) => {
+      if (context?.previousSets) {
+        queryClient.setQueryData(["sets", workoutId], context.previousSets);
+      }
+      toast.error(`Failed to add set: ${err.message}`);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["sets", workoutId] });
+    },
+  });
+
+  const deleteSetMutation = useMutation({
+    mutationFn: async (setId: string) => {
+      return await deleteSetAction(userId, setId);
+    },
+    onMutate: async (setId) => {
+      await queryClient.cancelQueries({ queryKey: ["sets", workoutId] });
+      const previousSets = queryClient.getQueryData<DBSet[]>(["sets", workoutId]);
+      
+      queryClient.setQueryData<DBSet[]>(["sets", workoutId], (old = []) => {
+        const setToDelete = old.find(s => s.id === setId);
+        if (!setToDelete) return old;
+        
+        return old
+          .filter(s => s.id !== setId)
+          .map(s => s.exerciseId === setToDelete.exerciseId && s.order > setToDelete.order
+            ? { ...s, order: s.order - 1 }
+            : s
+          );
+      });
+      
+      return { previousSets };
+    },
+    onError: (err, vars, context) => {
+      if (context?.previousSets) {
+        queryClient.setQueryData(["sets", workoutId], context.previousSets);
+      }
+      toast.error(`Failed to delete set: ${err.message}`);
+    },
+    onSuccess: async (deletedSet) => {
+      const remainingSets = sets.filter(s => 
+        s.exerciseId === deletedSet?.exerciseId && s.id !== deletedSet?.id
+      );
+      
+      for (const [index, set] of remainingSets.entries()) {
+        if (set.order !== index) {
+          await updateSetOrderAction(userId, set.id, index);
+        }
+      }
+      
+      await queryClient.invalidateQueries({ queryKey: ["sets", workoutId] });
+    },
+  });
+
+  const updateSetMutation = useMutation({
+    mutationFn: async (set: DBSet) => {
+      return await updateSetAction(userId, set);
+    },
+    onMutate: async (updatedSet) => {
+      await queryClient.cancelQueries({ queryKey: ["sets", workoutId] });
+      const previousSets = queryClient.getQueryData<DBSet[]>(["sets", workoutId]);
+      
+      queryClient.setQueryData<DBSet[]>(["sets", workoutId], (old = []) => {
+        return old.map(s => s.id === updatedSet.id ? updatedSet : s);
+      });
+      
+      return { previousSets };
+    },
+    onError: (err, vars, context) => {
+      if (context?.previousSets) {
+        queryClient.setQueryData(["sets", workoutId], context.previousSets);
+      }
+      toast.error(`Failed to update set: ${err.message}`);
+    },
+  });
+
+  const completeWorkoutMutation = useMutation({
+    mutationFn: async (date: Date) => {
+      return await completeWorkoutAction(userId, exercises, workoutId, date);
+    },
+    onSuccess: () => {
+      router.push(`/workout/completed/${workoutId}`);
+    },
+    onError: (err) => {
+      toast.error(`Failed to complete workout: ${err.message}`);
+    },
+  });
+
+  function handleAddExercise() {
     if (exerciseToAdd.name.length === 0) {
       toast.error("You must enter an exercise name");
       return;
     }
-    const newExercises = [...exercises];
 
-    let newExercise: DBExercise | undefined;
-    setLoading(true);
-    try {
-      newExercise = await createExercise(workout.userId, exerciseToAdd.name, exerciseToAdd.position, workout.id);
-      if (!newExercise) {
-        toast.error("Failed to add exercise, please try again");
-        return;
+    addExerciseMutation.mutate(
+      { name: exerciseToAdd.name, order: exerciseToAdd.position },
+      {
+        onSuccess: () => {
+          setExerciseToAdd({ name: "", position: 0 });
+        },
       }
-    } catch (err) {
-      toast.error(`Error: ${(err as Error).message}`);
-      return;
-    } finally {
-      setLoading(false);
-    }
-
-    newExercises.splice(newExercise.order, 0, {
-      id: newExercise.id,
-      name: newExercise.name,
-      order: newExercise.order,
-      workoutId: newExercise.workoutId,
-      sets: [],
-      note: newExercise.note ?? undefined,
-    });
-
-    newExercises.forEach(async (exercise, i) => {
-      exercise.order = i;
-      await updateExerciseOrderAction(workout.userId, exercise.id, i);
-    });
-    setExercises(newExercises);
-    setExerciseToAdd({ name: "", position: 0 });
+    );
   }
 
-  async function handleAddSet(index: number) {
-    setLoading(true);
-
-    const newExercises = [...exercises];
-
-    if (!newExercises[index]) {
-      toast.error("No exercise to add set to");
-      return;
-    }
-
-    let newSet: DBSet | undefined;
-    try {
-      newSet = await createSet(workout.userId, newExercises[index], newExercises[index].sets.length);
-      if (!newSet) {
-        toast.error("Failed to add set, please try again");
-        return;
-      }
-    } catch (err) {
-      toast.error(`Failed to add set: ${(err as Error).message}`);
-      return;
-    } finally {
-      setLoading(false);
-    }
-
-    newExercises[index].sets.push({
-      id: newSet.id,
-      order: newSet.order,
-      exerciseId: newSet.exerciseId,
-      reps: newSet.reps ?? undefined,
-      weight: newSet.weight ?? undefined,
-    });
-    setExercises(newExercises);
+  function handleDeleteExercise(exerciseId: string) {
+    deleteExerciseMutation.mutate(exerciseId);
   }
 
-  async function handleRemoveSet(eIdx: number, sIdx: number) {
-    const newExercises = [...exercises];
-
-    if (!newExercises[eIdx]) {
-      toast.error("Set doesn't exist");
-      return;
-    }
-
-    const setToRemove = newExercises[eIdx].sets[sIdx];
-
-    if (!setToRemove) {
-      toast.error("Couldn't find set");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const deletedSet = await deleteSetAction(workout.userId, setToRemove.id);
-
-      if (!deletedSet) {
-        toast.error("Failed to delete set, please try again");
-        return;
-      }
-
-      newExercises[eIdx] = {
-        ...newExercises[eIdx],
-        sets: newExercises[eIdx].sets.filter((_, idx) => idx !== sIdx),
-      };
-
-      newExercises[eIdx].sets.forEach(async (set, i) => {
-        await updateSetOrderAction(workout.userId, set.id, i);
-        set.order = i;
-      });
-
-      setExercises(newExercises);
-    } catch (err) {
-      toast.error(`Failed to remove set: ${(err as Error).message}`);
-      return;
-    } finally {
-      setLoading(false);
-    }
+  function handleAddSet(exerciseId: string) {
+    const exerciseSets = getSetsForExercise(exerciseId);
+    addSetMutation.mutate({ exerciseId, order: exerciseSets.length });
   }
 
-  function handleUpdateSet(
-    eIdx: number,
-    sIdx: number,
-    field: string,
-    value: string,
-  ) {
-    const newExercises = [...exercises];
+  function handleRemoveSet(setId: string) {
+    deleteSetMutation.mutate(setId);
+  }
 
-    if (!newExercises[eIdx]?.sets[sIdx]) {
+  function handleUpdateSet(setId: string, field: "reps" | "weight", value: string) {
+    const set = sets.find(s => s.id === setId);
+    if (!set) {
       toast.error("Couldn't find set, try refreshing the page");
       return;
     }
 
-    const numValue = value === "" ? undefined : Number(value);
+    const numValue = value === "" ? null : Number(value);
+    const updatedSet = { ...set, [field]: numValue };
 
-    const updatedSet = {
-      ...newExercises[eIdx].sets[sIdx],
-      [field]: numValue,
-    };
-
-    newExercises[eIdx].sets[sIdx] = updatedSet;
-    setExercises(newExercises);
+    queryClient.setQueryData<DBSet[]>(["sets", workoutId], (old = []) => {
+      return old.map(s => s.id === setId ? updatedSet : s);
+    });
   }
 
-  async function onBlurSaveSet(eIdx: number, sIdx: number) {
-    const setToSave = exercises[eIdx]?.sets[sIdx];
-
-    if (!setToSave) {
+  function onBlurSaveSet(setId: string) {
+    const set = sets.find(s => s.id === setId);
+    if (!set) {
       toast.error("Couldn't find set, try refreshing the page");
       return;
     }
 
-    setLoading(true);
-    try {
-      const savedSet = await updateSetAction(workout.userId, setToSave);
-      if (!savedSet) {
-        toast.error("Failed to update set, please try again");
-        return;
+    updateSetMutation.mutate(set);
+  }
+
+  function handleUpdateExerciseNote(exerciseId: string, value: string) {
+    setLocalExerciseNotes(prev => ({ ...prev, [exerciseId]: value }));
+  }
+
+  function handleSaveExerciseNote(exerciseId: string) {
+    const note = localExerciseNotes[exerciseId];
+    updateExerciseNoteMutation.mutate(
+      { exerciseId, note: note ?? null },
+      {
+        onSuccess: () => {
+          setLocalExerciseNotes(prev => {
+            const updated = { ...prev };
+            delete updated[exerciseId];
+            return updated;
+          });
+        },
       }
-    } catch (err) {
-      toast.error(`Error: ${(err as Error).message}`);
-      return;
-    } finally {
-      setLoading(false);
-    }
+    );
   }
 
-  function handleUpdateExerciseNote(eIdx: number, value: string) {
-    const newExercises = [...exercises];
-    if (!newExercises[eIdx]) {
-      toast.error("Failed to update exercise note.");
-      return;
-    }
-
-    newExercises[eIdx] = {
-      ...newExercises[eIdx],
-      note: value,
-    };
-    setExercises(newExercises);
+  function handleCompleteWorkout() {
+    completeWorkoutMutation.mutate(workoutDate ?? new Date());
   }
 
-  async function handleSaveExerciseNote(eIdx: number) {
-    const newExercise = exercises[eIdx];
-    if (!newExercise) {
-      toast.error("Cannot find that exercise to update");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const savedExercise = await updateExerciseNoteAction(workout.userId, newExercise.id, newExercise.note ?? null);
-      if (!savedExercise) {
-        toast.error("Failed to save note, please try again");
-        return;
-      }
-    } catch (err) {
-      toast.error(`Error: ${(err as Error).message}`);
-      return;
-    } finally {
-      setLoading(false);
-    }
-
-  }
-
-  async function handleDeleteExercise(eIdx: number) {
-    const newExercises = [...exercises];
-
-    if (!newExercises[eIdx]) {
-      toast.error("Could not find exercise to delete");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const deletedExercise = await deleteExerciseAction(workout.userId, newExercises[eIdx].id);
-      if (!deletedExercise) {
-        toast.error("Failed to delete exercise, please try again");
-        return;
-      }
-    } catch (err) {
-      toast.error(`Error: ${(err as Error).message}`);
-      return;
-    } finally {
-      setLoading(false);
-    }
-
-    newExercises.splice(eIdx, 1);
-
-    newExercises.forEach(async (exercise, i) => {
-      await updateExerciseOrderAction(workout.userId, exercise.id, i);
-      exercise.order = i;
-    });
-
-    setExercises(newExercises);
-  }
-
-  async function handleCompleteWorkout() {
-    setLoading(true);
-    try {
-      await completeWorkoutAction(workout.userId, exercises, workout.id, workoutDate ?? new Date());
-      router.push(`/workout/completed/${workout.id}`);
-    } catch (err) {
-      toast.error(`Error: ${(err as Error).message}`);
-      return;
-    } finally {
-      setLoading(false);
-    }
-
-    setWorkout({
-      ...workout,
-      completed: true,
-    })
-  }
+  const isCompletingWorkout = completeWorkoutMutation.isPending;
+  const isAddingExercise = addExerciseMutation.isPending;
 
   return (
     <main className="mt-8 flex flex-col items-center space-y-6">
-      <h1 className="text-2xl">{workout.title}</h1>
+      <h1 className="text-2xl">{initialWorkout.title}</h1>
       <p className="text-muted-foreground leading-relaxed">
-        {workout.description}
+        {initialWorkout.description}
       </p>
 
       <section className="flex w-full flex-col space-y-12">
-        {exercises.map((exercise, eIdx) => (
-          <div key={eIdx} className="space-y-4">
-            <div className="flex flex-row justify-between text-xl">
-              <div className="flex flex-row items-center gap-2">
-                <h2>{exercise.name}</h2>
-                <Button
-                  variant={"ghost"}
-                  onClick={() => handleDeleteExercise(eIdx)}
-                  disabled={workout.completed}
-                >
-                  <Trash size={18} />
-                </Button>
-              </div>
-              <h2>result</h2>
-            </div>
-            {exercise.sets.map((set, sIdx) => (
-              <div
-                className="flex flex-row items-center justify-between"
-                key={sIdx}
-              >
-                <span className="text-muted-foreground">set {sIdx + 1}</span>
-                <div className="flex flex-row items-center space-x-2">
-                  <Input
-                    className="w-[75]"
-                    placeholder="lbs..."
-                    value={set.weight ?? ""}
-                    type="number"
-                    onBlur={() => onBlurSaveSet(eIdx, sIdx)}
-                    onChange={(e) =>
-                      handleUpdateSet(eIdx, sIdx, "weight", e.target.value)
-                    }
-                    disabled={workout.completed}
-                  />
-                  <Input
-                    className="w-[75]"
-                    placeholder="reps..."
-                    value={set.reps ?? ""}
-                    type="number"
-                    onBlur={() => onBlurSaveSet(eIdx, sIdx)}
-                    onChange={(e) =>
-                      handleUpdateSet(eIdx, sIdx, "reps", e.target.value)
-                    }
-                    disabled={workout.completed}
-                  />
-                  <Button variant={"ghost"} onClick={() => handleRemoveSet(eIdx, sIdx)} disabled={workout.completed}>
-                    <Trash />
+        {exercises.map((exercise) => {
+          const exerciseSets = getSetsForExercise(exercise.id);
+          const exerciseNote = localExerciseNotes[exercise.id] ?? exercise.note ?? "";
+          const isDeleting = deleteExerciseMutation.isPending && 
+                            deleteExerciseMutation.variables === exercise.id;
+          const isSavingNote = updateExerciseNoteMutation.isPending &&
+                              updateExerciseNoteMutation.variables?.exerciseId === exercise.id;
+
+          return (
+            <div 
+              key={exercise.id} 
+              className={`space-y-4 transition-opacity ${isDeleting ? "opacity-50" : ""}`}
+            >
+              <div className="flex flex-row justify-between text-xl">
+                <div className="flex flex-row items-center gap-2">
+                  <h2>{exercise.name}</h2>
+                  <Button
+                    variant={"ghost"}
+                    onClick={() => handleDeleteExercise(exercise.id)}
+                    disabled={initialWorkout.completed || isDeleting}
+                  >
+                    <Trash size={18} />
                   </Button>
                 </div>
+                <h2>result</h2>
               </div>
-            ))}
-            <div className="flex items-center justify-center mt-8">
-              <Button variant={"outline"} className="w-1/4 rounded-none rounded-l-lg" onClick={() => handleAddSet(eIdx)} disabled={workout.completed}>
-                new set
-              </Button>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant={"outline"} className="w-1/4 rounded-none rounded-r-lg" disabled={workout.completed}>
-                    add note
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>how did you feel during this exercise?</DialogTitle>
-                    <DialogDescription>
-                      in the future, this will be taken into account when pregenerating your next workouts.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <Textarea
-                    id="notes"
-                    value={exercises[eIdx]?.note}
-                    onChange={(e) => handleUpdateExerciseNote(eIdx, e.target.value)}
-                    placeholder={`felt great today, hit a PR on my top set...`}
-                    disabled={workout.completed}
-                  />
-                  <DialogFooter>
-                    <DialogClose asChild>
-                      <div className="space-x-2">
-                        <Button type="button" variant="secondary">
-                          close
-                        </Button>
-                        <Button type="submit" onClick={() => handleSaveExerciseNote(eIdx)} disabled={workout.completed}>save note</Button>
-                      </div>
-                    </DialogClose>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+              {exerciseSets.map((set, sIdx) => {
+                const isUpdating = updateSetMutation.isPending && 
+                                  updateSetMutation.variables?.id === set.id;
+                const isRemoving = deleteSetMutation.isPending &&
+                                  deleteSetMutation.variables === set.id;
+
+                return (
+                  <div
+                    className={`flex flex-row items-center justify-between transition-opacity ${isRemoving ? "opacity-50" : ""}`}
+                    key={set.id}
+                  >
+                    <span className="text-muted-foreground">set {sIdx + 1}</span>
+                    <div className="flex flex-row items-center space-x-2">
+                      <Input
+                        className={`w-[75] transition-opacity ${isUpdating ? "opacity-70" : ""}`}
+                        placeholder="lbs..."
+                        value={set.weight ?? ""}
+                        type="number"
+                        onBlur={() => onBlurSaveSet(set.id)}
+                        onChange={(e) =>
+                          handleUpdateSet(set.id, "weight", e.target.value)
+                        }
+                        disabled={initialWorkout.completed}
+                      />
+                      <Input
+                        className={`w-[75] transition-opacity ${isUpdating ? "opacity-70" : ""}`}
+                        placeholder="reps..."
+                        value={set.reps ?? ""}
+                        type="number"
+                        onBlur={() => onBlurSaveSet(set.id)}
+                        onChange={(e) =>
+                          handleUpdateSet(set.id, "reps", e.target.value)
+                        }
+                        disabled={initialWorkout.completed}
+                      />
+                      <Button
+                        variant={"ghost"}
+                        onClick={() => handleRemoveSet(set.id)}
+                        disabled={initialWorkout.completed || isRemoving}
+                      >
+                        <Trash />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+              <div className="mt-8 flex items-center justify-center">
+                <Button
+                  variant={"outline"}
+                  className="w-1/4 rounded-none rounded-l-lg"
+                  onClick={() => handleAddSet(exercise.id)}
+                  disabled={initialWorkout.completed}
+                >
+                  new set
+                </Button>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className="w-1/4 rounded-none rounded-r-lg"
+                      disabled={initialWorkout.completed}
+                    >
+                      add note
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>
+                        how did you feel during this exercise?
+                      </DialogTitle>
+                      <DialogDescription>
+                        in the future, this will be taken into account when
+                        pregenerating your next workouts.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <Textarea
+                      id="notes"
+                      value={exerciseNote}
+                      onChange={(e) =>
+                        handleUpdateExerciseNote(exercise.id, e.target.value)
+                      }
+                      placeholder={`felt great today, hit a PR on my top set...`}
+                      disabled={initialWorkout.completed}
+                    />
+                    <DialogFooter>
+                      <DialogClose asChild>
+                        <div className="space-x-2">
+                          <Button type="button" variant="secondary">
+                            close
+                          </Button>
+                          <Button
+                            type="submit"
+                            onClick={() => handleSaveExerciseNote(exercise.id)}
+                            disabled={initialWorkout.completed || isSavingNote}
+                          >
+                            {isSavingNote ? "saving..." : "save note"}
+                          </Button>
+                        </div>
+                      </DialogClose>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         <div className="flex flex-col items-center space-y-2">
           <Dialog>
             <DialogTrigger asChild>
-              <Button className="w-1/4" disabled={workout.completed}>
+              <Button className="w-1/4" disabled={initialWorkout.completed}>
                 add exercise
               </Button>
             </DialogTrigger>
@@ -471,12 +548,12 @@ export default function WorkoutTracker({
                       }))
                     }
                     placeholder="incline dumbell press"
-                    disabled={workout.completed}
+                    disabled={initialWorkout.completed || isAddingExercise}
                   />
                 </div>
               </div>
               {exercises.map((exercise, i) => (
-                <div key={i} className="flex items-center justify-between">
+                <div key={exercise.id} className="flex items-center justify-between">
                   <span>{exercise.name}</span>
                   <div className="space-x-1">
                     <Button
@@ -490,7 +567,7 @@ export default function WorkoutTracker({
                           position: i,
                         }))
                       }
-                      disabled={workout.completed}
+                      disabled={initialWorkout.completed || isAddingExercise}
                     >
                       <ArrowUp />
                     </Button>
@@ -505,7 +582,7 @@ export default function WorkoutTracker({
                           position: i + 1,
                         }))
                       }
-                      disabled={workout.completed}
+                      disabled={initialWorkout.completed || isAddingExercise}
                     >
                       <ArrowDown />
                     </Button>
@@ -518,45 +595,63 @@ export default function WorkoutTracker({
                     close
                   </Button>
                 </DialogClose>
-                <Button onClick={handleAddExercise} disabled={workout.completed}>add exercise</Button>
+                <Button
+                  onClick={handleAddExercise}
+                  disabled={initialWorkout.completed || isAddingExercise}
+                >
+                  {isAddingExercise ? "adding..." : "add exercise"}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
 
           <Dialog>
             <DialogTrigger asChild>
-              <Button className="w-1/4" disabled={workout.completed}>
+              <Button className="w-1/4" disabled={initialWorkout.completed || isCompletingWorkout}>
                 complete workout
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>are you sure you're finished with your workout?</DialogTitle>
+                    <DialogTitle>
+                      are you sure you&apos;re finished with your workout?
+                    </DialogTitle>
                 <DialogDescription>
-                  once you complete your workout, you will not be able to edit it.
+                  once you complete your workout, you will not be able to edit
+                  it.
                 </DialogDescription>
               </DialogHeader>
               <div className="flex flex-col gap-3">
-                <Popover open={workoutCompleteOpen} onOpenChange={setWorkoutCompleteOpen}>
-                  <Label htmlFor="date" className="px-1 w-24">workout date</Label>
+                <Popover
+                  open={workoutCompleteOpen}
+                  onOpenChange={setWorkoutCompleteOpen}
+                >
+                  <Label htmlFor="date" className="w-24 px-1">
+                    workout date
+                  </Label>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
                       id="date"
                       className="w-48 justify-between font-normal"
                     >
-                      {workoutDate ? workoutDate.toLocaleDateString() : "select date"}
+                      {workoutDate
+                        ? workoutDate.toLocaleDateString()
+                        : "select date"}
                       <ChevronDownIcon />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+                  <PopoverContent
+                    className="w-auto overflow-hidden p-0"
+                    align="start"
+                  >
                     <Calendar
                       mode="single"
                       selected={workoutDate}
                       captionLayout="dropdown"
                       onSelect={(date) => {
-                        setWorkoutDate(date)
-                        setWorkoutCompleteOpen(false)
+                        setWorkoutDate(date);
+                        setWorkoutCompleteOpen(false);
                       }}
                       hidden={{ after: new Date() }}
                     />
@@ -569,8 +664,12 @@ export default function WorkoutTracker({
                     <Button type="button" variant="secondary">
                       close
                     </Button>
-                    <Button variant={"destructive"} onClick={handleCompleteWorkout} disabled={workout.completed}>
-                      complete workout
+                    <Button
+                      variant={"destructive"}
+                      onClick={handleCompleteWorkout}
+                      disabled={initialWorkout.completed || isCompletingWorkout}
+                    >
+                      {isCompletingWorkout ? "completing..." : "complete workout"}
                     </Button>
                   </div>
                 </DialogClose>

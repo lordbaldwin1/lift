@@ -35,7 +35,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ work
             );
         }
 
-        const sets = selectSetsByWorkout(workoutId);
+        const sets = await selectSetsByWorkout(workoutId);
 
         return NextResponse.json(sets);
     } catch (err) {

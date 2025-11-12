@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { db } from ".";
 import type { DBExercise, NewExercise, NewSet, NewWorkout, Sentiment } from "./schema";
 import { exercise, set, workout } from "./schema";
@@ -30,7 +30,8 @@ export async function selectExercises(workoutId: string) {
   const rows = await db
     .select()
     .from(exercise)
-    .where(eq(exercise.workoutId, workoutId));
+    .where(eq(exercise.workoutId, workoutId))
+    .orderBy(asc(exercise.order));
   return rows;
 }
 
@@ -57,7 +58,8 @@ export async function selectSets(exerciseId: string) {
   const rows = await db
     .select()
     .from(set)
-    .where(eq(set.exerciseId, exerciseId));
+    .where(eq(set.exerciseId, exerciseId))
+    .orderBy(asc(set.order));
   return rows;
 }
 
@@ -87,7 +89,12 @@ export async function updateSet(setId: string, reps: number | null, weight: numb
 }
 
 export async function selectSetsByWorkout(workoutId: string) {
-  const rows = await db.select({ set }).from(set).innerJoin(exercise, eq(set.exerciseId, exercise.id)).where(eq(exercise.workoutId, workoutId));
+  const rows = await db
+    .select({ set })
+    .from(set)
+    .innerJoin(exercise, eq(set.exerciseId, exercise.id))
+    .where(eq(exercise.workoutId, workoutId))
+    .orderBy(asc(set.order));
   return rows.map(r => r.set);
 }
 

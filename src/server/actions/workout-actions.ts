@@ -1,11 +1,10 @@
 "use server";
 
-import type { Exercise, ExerciseSet, Workout } from "~/components/workout-tracker";
 import { headers } from "next/headers";
 import { auth } from "../auth/auth";
-import { completeWorkout, deleteExercise, deleteSet, insertExercise, insertSet, insertWorkout, updateExerciseNote, updateExerciseOrder, updateSet, updateSetOrder, updateWorkoutSentiment } from "../db/queries";
+import { completeWorkout, deleteExercise, deleteSet, insertExercise, insertSet, insertWorkout, updateExerciseNote, updateExerciseOrder, updateSet, updateSetOrder, updateWorkoutSentiment, selectExercises } from "../db/queries";
 import type { WorkoutTemplate } from "~/app/workout/create/page";
-import type { NewExercise, NewSet, Sentiment } from "../db/schema";
+import type { DBExercise, DBSet, NewExercise, NewSet, Sentiment } from "../db/schema";
 
 export async function createWorkout(workout: WorkoutTemplate) {
   const session = await auth.api.getSession({
@@ -29,7 +28,7 @@ export async function createWorkout(workout: WorkoutTemplate) {
   return newWorkout;
 }
 
-export async function createSet(userId: string, exercise: Exercise, order: number) {
+export async function createSet(userId: string, exercise: DBExercise, order: number) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -62,6 +61,16 @@ export async function createExercise(userId: string, name: string, order: number
 
   if (session.user.id !== userId) {
     throw new Error("You cannot add exerises to other peoples' workouts");
+  }
+
+  // Get existing exercises to update their orders
+  const existingExercises = await selectExercises(workoutId);
+  
+  // Update order of exercises that come after the insertion point
+  for (const exercise of existingExercises) {
+    if (exercise.order >= order) {
+      await updateExerciseOrder(exercise.id, exercise.order + 1);
+    }
   }
 
   const newExercise: NewExercise = {
@@ -139,10 +148,23 @@ export async function deleteExerciseAction(userId: string, exerciseId: string) {
   }
 
   const deletedExercise = await deleteExercise(exerciseId);
+  
+  // Get remaining exercises in the same workout to update their orders
+  if (deletedExercise) {
+    const remainingExercises = await selectExercises(deletedExercise.workoutId);
+    
+    // Update order of exercises that came after the deleted one
+    for (const exercise of remainingExercises) {
+      if (exercise.order > deletedExercise.order) {
+        await updateExerciseOrder(exercise.id, exercise.order - 1);
+      }
+    }
+  }
+  
   return deletedExercise;
 }
 
-export async function updateSetAction(userId: string, set: ExerciseSet) {
+export async function updateSetAction(userId: string, set: DBSet) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -176,7 +198,7 @@ export async function updateExerciseNoteAction(userId: string, exercideId: strin
   return updatedExercise;
 }
 
-export async function completeWorkoutAction(userId: string, exercises: Exercise[], workoutId: string, workoutDate: Date) {
+export async function completeWorkoutAction(userId: string, exercises: DBExercise[], workoutId: string, workoutDate: Date) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });

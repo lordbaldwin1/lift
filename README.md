@@ -20,7 +20,8 @@ my personal hypertrophy training app
 - [x] add workout sentiment to workout table (good, medium, bad) for how user felt about that workout
 - [x] add complete workout functionality with optional date picker
 - [x] add rating workout sentiment in completed workout page
-- [ ] add tanstack query for client/server state management
+- [x] add tanstack query for client/server state management
+- [ ] change set updates to debounce rather than onBlur?
 - [ ] add loading states to workout-tracker and rate-workout
 - [ ] refactor workout-tracker logic into custom hook
 - [ ] break workout-tracker into multiple components (maybe?)
