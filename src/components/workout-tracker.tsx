@@ -19,56 +19,80 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 import { completeWorkoutAction, createExercise, createSet, deleteExerciseAction, deleteSetAction, updateExerciseNoteAction, updateExerciseOrderAction, updateSetAction, updateSetOrderAction } from "~/server/actions/workout-actions";
-import type { DBExercise, DBSet, Sentiment } from "~/server/db/schema";
+import type { DBExercise, DBSet, DBWorkout, Sentiment } from "~/server/db/schema";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Calendar } from "./ui/calendar";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-export type Workout = {
-  id: string;
-  title: string;
-  description: string;
-  sentiment: Sentiment | null;
-  completed: boolean;
-  userId: string;
-};
-
-export type Exercise = {
-  id: string;
-  name: string;
-  order: number;
-  workoutId: string;
-  sets: ExerciseSet[];
-  note: string | undefined;
-};
-
-export type ExerciseSet = {
-  id: string;
-  order: number;
-  exerciseId: string;
-  reps: number | undefined;
-  weight: number | undefined;
-};
 
 type WorkoutTrackerProps = {
-  initialWorkout: Workout;
-  initialExercises: Exercise[];
+  initialWorkout: DBWorkout;
+  initialExercises: DBExercise[];
+  initialSets: DBSet[];
 };
 
 export default function WorkoutTracker({
   initialWorkout,
   initialExercises,
+  initialSets,
 }: WorkoutTrackerProps) {
-  const [workout, setWorkout] = useState<Workout>(initialWorkout);
-  const [exercises, setExercises] = useState<Exercise[]>(initialExercises);
+  const [workout, setWorkout] = useState<DBWorkout>(initialWorkout);
+  const [exercises, setExercises] = useState<DBExercise[]>(initialExercises);
   const [exerciseToAdd, setExerciseToAdd] = useState<{
     name: string;
     position: number;
   }>({ name: "", position: 0 });
   const [loading, setLoading] = useState<boolean>(false);
-  const [workoutCompleteOpen, setWorkoutCompleteOpen] = useState(false)
-  const [workoutDate, setWorkoutDate] = useState<Date | undefined>(new Date())
-
+  const [workoutCompleteOpen, setWorkoutCompleteOpen] = useState(false);
+  const [workoutDate, setWorkoutDate] = useState<Date | undefined>(new Date());
   const router = useRouter();
+
+  const queryClient = useQueryClient();
+  const workoutId = initialWorkout.id;
+
+  async function fetchExercises() {
+    const response = await fetch(`/api/workouts/${workoutId}/exercises`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch exercises");
+    }
+    return response.json();
+  }
+
+  async function fetchSets() {
+    const response = await fetch(`/api/workouts/${workoutId}/sets`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch exercises");
+    }
+    return response.json();
+  }
+
+  const { data: exercises = [] } = useQuery({
+    queryKey: ["exercises", workoutId],
+    queryFn: fetchExercises,
+    initialData: initialExercises,
+    staleTime: Infinity,
+  });
+
+  const { data: sets = [] } = useQuery({
+    queryKey: ["sets", workoutId],
+    queryFn: fetchSets,
+    initialData: initialSets,
+    staleTime: Infinity,
+  });
+
+  const addExerciseMutation = useMutation({
+    mutationFn: async (params: { name: string, order: number }) => {
+      const newExercise = await createExercise(workout.userId, params.name, params.order, workoutId);
+      return newExercise;
+    },
+
+    onMutate: async ({ name, order }) => {
+      await queryClient.cancelQueries({ queryKey: ["exercises", workoutId] });
+      const previousExercises = queryClient.getQueryData(["exercises", workoutId]);
+
+      
+    }
+  })
 
   async function handleAddExercise() {
     if (exerciseToAdd.name.length === 0) {

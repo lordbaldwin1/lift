@@ -2,10 +2,11 @@ import { notFound } from "next/navigation";
 import {
   selectExercises,
   selectSets,
+  selectSetsByWorkout,
   selectWorkout,
 } from "~/server/db/queries";
-import type { Exercise } from "~/components/workout-tracker";
 import WorkoutTracker from "~/components/workout-tracker";
+import type { DBSet } from "~/server/db/schema";
 
 export default async function WorkoutPage({
   params,
@@ -20,39 +21,14 @@ export default async function WorkoutPage({
   }
 
   const exercises = await selectExercises(workoutId);
-
-  const exerciseProp: Exercise[] = [];
-
-  for (const exercise of exercises) {
-    const tempExercise: Exercise = {
-      id: exercise.id,
-      name: exercise.name,
-      note: exercise.note ?? undefined,
-      order: exercise.order,
-      workoutId: workout.id,
-      sets: [],
-    };
-
-    const sets = await selectSets(exercise.id);
-
-    for (const set of sets) {
-      tempExercise.sets.push({
-        id: set.id,
-        order: set.order,
-        exerciseId: tempExercise.id,
-        reps: set.reps ?? undefined,
-        weight: set.weight ?? undefined,
-      });
-    }
-
-    exerciseProp.push(tempExercise);
-  }
+  const sets = await selectSetsByWorkout(workoutId);
 
   return (
     <div>
       <WorkoutTracker
         initialWorkout={workout}
-        initialExercises={exerciseProp}
+        initialExercises={exercises}
+        initialSets={sets}
       />
     </div>
   );

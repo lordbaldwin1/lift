@@ -1,8 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from ".";
-import type { NewExercise, NewSet, NewWorkout, Sentiment } from "./schema";
+import type { DBExercise, NewExercise, NewSet, NewWorkout, Sentiment } from "./schema";
 import { exercise, set, workout } from "./schema";
-import type { Exercise } from "~/components/workout-tracker";
 
 export async function insertWorkout(newWorkout: NewWorkout) {
   const [row] = await db.insert(workout).values(newWorkout).returning();
@@ -87,40 +86,12 @@ export async function updateSet(setId: string, reps: number | null, weight: numb
   return row;
 }
 
-export async function completeWorkout(exercises: Exercise[], workoutId: string, workoutDate: Date) {
-  for (const e of exercises) {
-    await db.insert(exercise).values({
-      id: e.id,
-      name: e.name,
-      note: e.note,
-      order: e.order,
-      workoutId: e.workoutId,
-    }).onConflictDoUpdate({
-      target: exercise.id,
-      set: {
-        name: e.name,
-        note: e.note,
-        order: e.order,
-      }
-    });
+export async function selectSetsByWorkout(workoutId: string) {
+  const rows = await db.select({ set }).from(set).innerJoin(exercise, eq(set.exerciseId, exercise.id)).where(eq(exercise.workoutId, workoutId));
+  return rows.map(r => r.set);
+}
 
-    for (const s of e.sets) {
-      await db.insert(set).values({
-        id: s.id,
-        reps: s.reps,
-        weight: s.weight,
-        order: s.order,
-        exerciseId: s.exerciseId
-      }).onConflictDoUpdate({
-        target: set.id,
-        set: {
-          reps: s.reps,
-          weight: s.weight,
-          order: s.order,
-        }
-      });
-    }
-  }
+export async function completeWorkout(exercises: DBExercise[], workoutId: string, workoutDate: Date) {
   await db.update(workout).set({
     completed: true,
     completedAt: workoutDate,
