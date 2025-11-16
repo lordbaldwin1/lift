@@ -98,7 +98,7 @@ export async function selectSetsByWorkout(workoutId: string) {
   return rows.map(r => r.set);
 }
 
-export async function completeWorkout(exercises: DBExercise[], workoutId: string, workoutDate: Date) {
+export async function completeWorkout(workoutId: string, workoutDate: Date) {
   await db.update(workout).set({
     completed: true,
     completedAt: workoutDate,

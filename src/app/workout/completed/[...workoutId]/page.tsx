@@ -13,11 +13,11 @@ export default async function CompletedWorkoutPage({
     const workout = await selectWorkout(workoutId);
 
     if (!workout) {
-        return <div>uh oh</div>
+        notFound();
     }
     
     return (
-        <main className="flex flex-col items-center justify-center h-[60vw]">
+        <main className="">
             <RateWorkout workout={workout} />
         </main>
     )

@@ -1,12 +1,11 @@
 import { notFound } from "next/navigation";
 import {
   selectExercises,
-  selectSets,
   selectSetsByWorkout,
   selectWorkout,
 } from "~/server/db/queries";
-import WorkoutTracker from "~/components/workout-tracker";
-import type { DBSet } from "~/server/db/schema";
+import WorkoutTracker from "~/components/workout/workout-tracker";
+import WorkoutHeader from "~/components/workout/workout-header";
 
 export default async function WorkoutPage({
   params,
@@ -24,12 +23,13 @@ export default async function WorkoutPage({
   const sets = await selectSetsByWorkout(workoutId);
 
   return (
-    <div>
+    <main className="mt-8 flex flex-col items-center space-y-6">
+      <WorkoutHeader title={workout.title} description={workout.description} />
       <WorkoutTracker
         initialWorkout={workout}
         initialExercises={exercises}
         initialSets={sets}
       />
-    </div>
+    </main>
   );
 }

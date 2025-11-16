@@ -21,10 +21,9 @@ my personal hypertrophy training app
 - [x] add complete workout functionality with optional date picker
 - [x] add rating workout sentiment in completed workout page
 - [x] add tanstack query for client/server state management
-- [ ] change set updates to debounce rather than onBlur?
-- [ ] add loading states to workout-tracker and rate-workout
-- [ ] refactor workout-tracker logic into custom hook
-- [ ] break workout-tracker into multiple components (maybe?)
+- [x] refactor workout-tracker queries and mutations into custom hook
+- [x] break workout-tracker into multiple components (maybe?)
+- [ ] fix complete workout functionality after react query refactor
 - [ ] create view completed workouts ui w/ github like activity graph, showing sentiment with emoji
 
 

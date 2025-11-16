@@ -25,7 +25,6 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable}`} suppressHydrationWarning>
       <body>
-        <div className="mx-auto max-w-4xl px-4 py-8">
           <QueryProvider>
             <ThemeProvider
               attribute="class"
@@ -38,7 +37,6 @@ export default function RootLayout({
               <Toaster position="top-center" />
             </ThemeProvider>
           </QueryProvider>
-        </div>
       </body>
     </html>
   );

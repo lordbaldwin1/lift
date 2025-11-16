@@ -198,7 +198,7 @@ export async function updateExerciseNoteAction(userId: string, exercideId: strin
   return updatedExercise;
 }
 
-export async function completeWorkoutAction(userId: string, exercises: DBExercise[], workoutId: string, workoutDate: Date) {
+export async function completeWorkoutAction(userId: string, workoutId: string, workoutDate: Date) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -211,7 +211,7 @@ export async function completeWorkoutAction(userId: string, exercises: DBExercis
     throw new Error("You cannot complete other peoples' workouts");
   }
 
-  await completeWorkout(exercises, workoutId, workoutDate);
+  await completeWorkout(workoutId, workoutDate);
 }
 
 export async function updateWorkoutSentimentAction(userId: string, workoudId: string, sentiment: Sentiment) {
