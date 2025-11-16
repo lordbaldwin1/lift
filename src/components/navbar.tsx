@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ThemeToggle } from "./theme-toggle";
-import { Loader2, LogIn, Mail, User2Icon, UserRound } from "lucide-react";
+import { Anvil, Loader2, LogIn, Mail, User2Icon, UserRound } from "lucide-react";
 import { Button } from "./ui/button";
 import {
   DropdownMenu,
@@ -28,23 +28,24 @@ export default function Navbar() {
   }
 
   return (
-    <section className="flex flex-row items-center justify-between bg-transparent">
-      <div className="space-x-4">
-        <Link href={"/"} className="text-xl">lift</Link>
-        <Link href={"/workout"} className="hover:text-muted-foreground">workouts</Link>
-        <Link href={"/workout/create"} className="hover:text-muted-foreground">create workout</Link>
+    <section className="flex flex-row items-end justify-between bg-transparent">
+      <div className="space-x-4 flex flex-row items-end">
+        <Link href={"/"} className="text-xl flex flex-row items-end gap-1">
+          <h1 className="font-bold tracking-tighter text-3xl md:block lg:block">lift.</h1>
+        </Link>
+        <Link href={"/workout"} className="hover:text-accent tracking-tighter duration-200 text-lg">workouts</Link>
       </div>
       <div className="flex flex-row items-center">
         <ThemeToggle />
         {isPending ? (
-          <Loader2 className="animate-spin w-[40]" size={18} />
+          <Loader2 className="animate-spin w-[68]" size={36} />
         ) : session ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant={"link"} className="hover:text-muted-foreground">
                 {
                   session.user.image
-                    ? <Image src={session.user.image} alt="your profile picture" width={25} height={25} className="rounded-full" />
+                    ? <Image src={session.user.image} alt="your profile picture" width={36} height={36} className="rounded-full" />
                     : <UserRound />
                 }
               </Button>

@@ -7,6 +7,7 @@ import Navbar from "~/components/navbar";
 import { Toaster } from "~/components/ui/sonner";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { QueryProvider } from "~/components/query-provider";
+import Footer from "~/components/footer";
 
 export const metadata: Metadata = {
   title: "lift",
@@ -25,6 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable}`} suppressHydrationWarning>
       <body>
+        <div className="mx-auto max-w-4xl px-4 py-8">
           <QueryProvider>
             <ThemeProvider
               attribute="class"
@@ -37,6 +39,7 @@ export default function RootLayout({
               <Toaster position="top-center" />
             </ThemeProvider>
           </QueryProvider>
+        </div>
       </body>
     </html>
   );

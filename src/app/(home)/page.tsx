@@ -1,19 +1,26 @@
-import Image from 'next/image';
+import Link from 'next/link';
+import Footer from '~/components/footer';
+import { Button } from '~/components/ui/button';
 
 export default function HomePage() {
   return (
-    <main className="relative min-h-screen">
-      <Image
-        src="/background.jpg"
-        alt="Background"
-        fill
-        quality={100}
-        priority
-        className="object-cover object-center"
-      />
-      <div className="relative z-10">
-        {/* Your content here */}
+    <div className="h-[calc(100vh-8rem)] bg-background flex flex-col">
+      <div className="flex-grow flex flex-col items-center justify-center">
+        <div className="max-w-3xl mx-auto text-center text-7xl md:text-8xl lg:text-9xl font-bold tracking-tighter">
+          <h1>lift.</h1>
+          <h1>rest.</h1>
+          <h1>repeat.</h1>
+        </div>
+        <div className="flex flex-row gap-4 items-center justify-center mt-12">
+          <Link href={"/workout"}>
+            <Button className="rounded-full p-5">begin</Button>
+          </Link>
+          <Link href={"/about"}>
+            <Button className="rounded-full p-5" variant={"outline"}>learn</Button>
+          </Link>
+        </div>
       </div>
-    </main>
+      <Footer />
+    </div>
   );
 }

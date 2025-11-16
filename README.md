@@ -23,8 +23,18 @@ my personal hypertrophy training app
 - [x] add tanstack query for client/server state management
 - [x] refactor workout-tracker queries and mutations into custom hook
 - [x] break workout-tracker into multiple components (maybe?)
+- [ ] create completed workouts page
 - [ ] fix complete workout functionality after react query refactor
 - [ ] create view completed workouts ui w/ github like activity graph, showing sentiment with emoji
+
+
+- [ ] add anvil attribution 
+```HTML
+<a href="https://www.flaticon.com/free-icons/anvil" title="anvil icons">Anvil icons created by Assia Benkerroum  - Flaticon</a>
+```
+```HTML
+<a href="https://www.flaticon.com/free-icons/excalibur" title="excalibur icons">Excalibur icons created by Graphix's Art - Flaticon</a>
+```
 
 
 
