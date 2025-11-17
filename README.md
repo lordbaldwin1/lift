@@ -24,9 +24,31 @@ my personal hypertrophy training app
 - [x] refactor workout-tracker queries and mutations into custom hook
 - [x] break workout-tracker into multiple components (maybe?)
 - [x] fix complete workout functionality after react query refactor
-- [ ] add ExerciseSelection table, add reference in exercises table
-- [ ] create completed workouts page
+- [x] add ExerciseSelection table, add reference in exercises table
+- [ ] add PR table (see below)
+- [ ] add check upon workout completion to see if PR was hit
+- [ ] add workout breakdown to workout/complete page
+- [ ] create workouts page
 - [ ] create view completed workouts ui w/ github like activity graph, showing sentiment with emoji
 
+### adding PR table and checking upon workout completion
+- userId, workoutId, exerciseSelectionId, weight, reps
+to update PRs upon workout completion:
+- gather PRs for each exercise of the workout (or all so we only do one query?)
+- go through each PR
+- get exercise for that PR, get sets for that exercise
+- compare each set with PR, if set is greater in weight or reps, update PR
 
-- [ ] refactor workout hooks to minimize rerenders
+### workout breakdown component
+want to show:
+- total sets
+- sets per muscle group
+- heaviest set
+- were any PRs hit? select PRs by workoutId then list them
+
+### adding a streak stat
+- week streak? 3 or more workouts in a weak for consecutive weeks builds a streak
+- likely will be derived from all workouts for user
+
+
+- [ ] refactor workout hooks to minimize rerenders if necessary
