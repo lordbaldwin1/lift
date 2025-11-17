@@ -27,9 +27,9 @@ my personal hypertrophy training app
 - [x] add ExerciseSelection table, add reference in exercises table
 - [ ] add PR table (see below)
 - [ ] add check upon workout completion to see if PR was hit
-- [ ] add workout breakdown to workout/complete page
-- [ ] create workouts page
-- [ ] create view completed workouts ui w/ github like activity graph, showing sentiment with emoji
+- [ ] add workout breakdown to workout complete page
+- [ ] create workouts page (see below)
+- [ ] add better templates for push pull legs with my current workouts
 
 ### adding PR table and checking upon workout completion
 - userId, workoutId, exerciseSelectionId, weight, reps
@@ -50,5 +50,15 @@ want to show:
 - week streak? 3 or more workouts in a weak for consecutive weeks builds a streak
 - likely will be derived from all workouts for user
 
+### workouts page plan
+- completed workouts ui w/ github like activity graph, showing sentiment with emoji
+- show your average sets per muscle group per week (don't include current week?)
+- show current weekly streak (3+ workouts per week)
+
+### Important stats I want to know
+- progression on each exercise over time
+- current PRs
+- average sets per muscle group per week
+- frequency of rest days (average rest days per week?)
 
 - [ ] refactor workout hooks to minimize rerenders if necessary
