@@ -30,6 +30,9 @@ my personal hypertrophy training app
 - [ ] add workout breakdown to workout complete page
 - [ ] create workouts page (see below)
 - [ ] add better templates for push pull legs with my current workouts
+- [ ] figure out what to test and how to test
+- [ ] add GitHub actions CI
+- [ ] how do I want to deploy this? VPS or AWS/GCP or to railway via docker containers & github actions? 
 
 ### adding PR table and checking upon workout completion
 - userId, workoutId, exerciseSelectionId, weight, reps
