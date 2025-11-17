@@ -13,10 +13,10 @@ export default function HomePage() {
         </div>
         <div className="flex flex-row gap-4 items-center justify-center mt-12">
           <Link href={"/workout"}>
-            <Button className="rounded-full text-xl p-7 tracking-tighter">begin</Button>
+            <Button className="rounded-full text-xl p-7 tracking-tighter">Begin</Button>
           </Link>
           <Link href={"/about"}>
-            <Button className="rounded-full text-xl p-7 tracking-tighter" variant={"outline"}>learn</Button>
+            <Button className="rounded-full text-xl p-7 tracking-tighter" variant={"outline"}>Learn</Button>
           </Link>
         </div>
       </div>

@@ -4,7 +4,6 @@ export default function Footer() {
   return (
     <footer className="bg-background/50 backdrop-blur-sm transition-opacity duration-300">
       <div className="mx-auto max-w-4xl px-4">
-        {/* Social links */}
         <div className="flex justify-center gap-6">
           <a
             href="https://github.com/lordbaldwin1/lift"
@@ -13,7 +12,7 @@ export default function Footer() {
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <Code className="h-4 w-4" />
-            <span className="text-sm">github</span>
+            <span className="text-sm">GitHub</span>
           </a>
           <a
             href="https://zacharyspringer.dev/"
@@ -22,7 +21,7 @@ export default function Footer() {
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <Cat className="h-4 w-4" />
-            <span className="text-sm">portfolio</span>
+            <span className="text-sm">Me</span>
           </a>
           <a
             href="mailto:springerczachary@gmail.com"
@@ -31,7 +30,7 @@ export default function Footer() {
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <Mail className="h-4 w-4" />
-            contact
+            Contact
             </a>
           
         </div>
