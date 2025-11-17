@@ -1,6 +1,6 @@
 "use client";
 
-import type { DBExercise, DBSet, DBWorkout } from "~/server/db/schema";
+import type { DBSet, DBWorkout, ExerciseWithSelection } from "~/server/db/schema";
 import useWorkoutMutations from "./hooks/use-workout-mutations";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
@@ -10,7 +10,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 type SetRowProps = {
   workout: DBWorkout;
-  exercises: DBExercise[];
+  exercises: ExerciseWithSelection[];
   sets: DBSet[];
   set: DBSet;
   sIdx: number;

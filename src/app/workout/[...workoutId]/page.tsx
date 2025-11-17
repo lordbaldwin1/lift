@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import {
-  selectExercises,
+  selectExercisesWithSelection,
   selectSetsByWorkout,
   selectWorkout,
 } from "~/server/db/queries";
@@ -19,7 +19,7 @@ export default async function WorkoutPage({
     notFound();
   }
 
-  const exercises = await selectExercises(workoutId);
+  const exercises = await selectExercisesWithSelection(workoutId);
   const sets = await selectSetsByWorkout(workoutId);
 
   return (

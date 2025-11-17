@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import type { DBExercise, DBSet } from "~/server/db/schema";
+import type { DBSet, ExerciseWithSelection } from "~/server/db/schema";
 
 type UseWorkoutDataProps = {
     workoutId: string;
-    initialExercises: DBExercise[];
+    initialExercises: ExerciseWithSelection[];
     initialSets: DBSet[];
 }
 
@@ -41,7 +41,7 @@ async function fetchExercises(workoutId: string) {
     if (!response.ok) {
         throw new Error("Failed to fetch exercises");
     }
-    return (await response.json()) as DBExercise[];
+    return (await response.json()) as ExerciseWithSelection[];
 }
 
 async function fetchSets(workoutId: string) {

@@ -2,12 +2,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { completeWorkoutAction, createExercise, createSet, deleteExerciseAction, deleteSetAction, updateExerciseNoteAction, updateSetAction, updateSetOrderAction } from "~/server/actions/workout-actions";
-import type { DBExercise, DBSet } from "~/server/db/schema";
+import type { DBExercise, DBSet, ExerciseWithSelection } from "~/server/db/schema";
 
 type UseWorkoutMutationsProps = {
     userId: string;
     workoutId: string;
-    exercises: DBExercise[];
+    exercises: ExerciseWithSelection[];
     sets: DBSet[];
 }
 
@@ -21,18 +21,16 @@ export default function useWorkoutMutations({
     const router = useRouter();
 
     const addExerciseMutation = useMutation({
-        mutationFn: async (params: { name: string; order: number }) => {
-          return await createExercise(userId, params.name, params.order, workoutId);
+        mutationFn: async (params: { exerciseSelectionId: string; order: number, name: string }) => {
+          return await createExercise(userId, params.order, workoutId, params.exerciseSelectionId);
         },
-        onMutate: async ({ name, order }) => {
+        onMutate: async ({ exerciseSelectionId, order, name }) => {
           await queryClient.cancelQueries({ queryKey: ["exercises", workoutId] });
-          const previousExercises = queryClient.getQueryData<DBExercise[]>(["exercises", workoutId]);
+          const previousExercises = queryClient.getQueryData<ExerciseWithSelection[]>(["exercises", workoutId]);
     
-          // optimistically update cache
-          queryClient.setQueryData<DBExercise[]>(["exercises", workoutId], (old = []) => {
-            const newExercise: DBExercise = {
+          queryClient.setQueryData<ExerciseWithSelection[]>(["exercises", workoutId], (old = []) => {
+            const newExercise: ExerciseWithSelection = {
               id: `temp-${Date.now()}`,
-              name,
               order,
               workoutId,
               note: null,
@@ -40,6 +38,14 @@ export default function useWorkoutMutations({
               repUpperBound: null,
               createdAt: new Date(),
               updatedAt: new Date(),
+              exerciseSelectionId,
+              exerciseSelection: {
+                id: "temp",
+                name,
+                category: null,
+                primaryMuscleGroup: "general",
+                secondaryMuscleGroup: null,
+              },
             };
             const updated = [...old];
             updated.splice(order, 0, newExercise);
@@ -65,9 +71,9 @@ export default function useWorkoutMutations({
         },
         onMutate: async (exerciseId) => {
           await queryClient.cancelQueries({ queryKey: ["exercises", workoutId] });
-          const previousExercises = queryClient.getQueryData<DBExercise[]>(["exercises", workoutId]);
+          const previousExercises = queryClient.getQueryData<ExerciseWithSelection[]>(["exercises", workoutId]);
     
-          queryClient.setQueryData<DBExercise[]>(["exercises", workoutId], (old = []) => {
+          queryClient.setQueryData<ExerciseWithSelection[]>(["exercises", workoutId], (old = []) => {
             return old.filter(ex => ex.id !== exerciseId).map((ex, idx) => ({ ...ex, order: idx }));
           });
     
@@ -91,9 +97,9 @@ export default function useWorkoutMutations({
         },
         onMutate: async ({ exerciseId, note }) => {
           await queryClient.cancelQueries({ queryKey: ["exercises", workoutId] });
-          const previousExercises = queryClient.getQueryData<DBExercise[]>(["exercises", workoutId]);
+          const previousExercises = queryClient.getQueryData<ExerciseWithSelection[]>(["exercises", workoutId]);
     
-          queryClient.setQueryData<DBExercise[]>(["exercises", workoutId], (old = []) => {
+          queryClient.setQueryData<ExerciseWithSelection[]>(["exercises", workoutId], (old = []) => {
             return old.map(ex => ex.id === exerciseId ? { ...ex, note } : ex);
           });
     

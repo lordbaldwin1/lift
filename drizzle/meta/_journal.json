@@ -5,50 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1762065270476,
-      "tag": "0000_faulty_rocket_raccoon",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1762319724421,
-      "tag": "0001_fresh_dust",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1762739601504,
-      "tag": "0002_shocking_captain_flint",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1762739729191,
-      "tag": "0003_fuzzy_chronomancer",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1762740863091,
-      "tag": "0004_complete_gabe_jones",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1762758519158,
-      "tag": "0005_odd_crystal",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1762758656574,
-      "tag": "0006_jittery_darkstar",
+      "when": 1763349631096,
+      "tag": "0000_messy_rhodey",
       "breakpoints": true
     }
   ]

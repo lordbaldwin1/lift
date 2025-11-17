@@ -35,6 +35,7 @@ export default async function WorkoutPage() {
                     {workout.title} | {workout.createdAt.toDateString()}
                 </Link>
             ))}
+            <Link href={"/workout/create"}>create new workout</Link>
         </main>
     )
 }

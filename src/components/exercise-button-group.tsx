@@ -5,14 +5,14 @@ import { Button } from "./ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Textarea } from "./ui/textarea";
 import useWorkoutData from "./workout/hooks/use-workout-data";
-import type { DBExercise, DBSet, DBWorkout } from "~/server/db/schema";
+import type { DBSet, DBWorkout, ExerciseWithSelection } from "~/server/db/schema";
 import useWorkoutMutations from "./workout/hooks/use-workout-mutations";
 
 type ExerciseButtonGroupProps = {
   workout: DBWorkout;
-  exercises: DBExercise[];
+  exercises: ExerciseWithSelection[];
   sets: DBSet[];
-  exercise: DBExercise;
+  exercise: ExerciseWithSelection;
 }
 export default function ExerciseButtonGroup({
   workout,

@@ -1,4 +1,4 @@
-import type { DBExercise, DBSet, DBWorkout } from "~/server/db/schema";
+import type { DBExercise, DBSet, DBWorkout, ExerciseWithSelection } from "~/server/db/schema";
 import ExerciseButtonGroup from "../exercise-button-group";
 import { Button } from "../ui/button";
 import SetRow from "./set-row";
@@ -8,7 +8,7 @@ import useWorkoutMutations from "./hooks/use-workout-mutations";
 
 type ExerciseListProps = {
   workout: DBWorkout;
-  exercises: DBExercise[];
+  exercises: ExerciseWithSelection[];
   sets: DBSet[];
 }
 export default function ExerciseList({
@@ -43,16 +43,15 @@ export default function ExerciseList({
           >
             <div className="flex flex-row justify-between text-xl">
               <div className="flex flex-row items-center gap-2">
-                <h2>{exercise.name}</h2>
-                <Button
+              <Button
                   variant={"ghost"}
                   onClick={() => handleDeleteExercise(exercise.id)}
                   disabled={workout.completed || isDeleting || isPending}
                 >
                   <Trash size={18} />
                 </Button>
+                <h2>{exercise.exerciseSelection.name}</h2>
               </div>
-              <h2>result</h2>
             </div>
             {exerciseSets.map((set, sIdx) => {
               return <SetRow key={sIdx} workout={workout} exercises={exercises} sets={sets} set={set} sIdx={sIdx} />

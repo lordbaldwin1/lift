@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ThemeToggle } from "./theme-toggle";
-import { Anvil, Loader2, LogIn, Mail, User2Icon, UserRound } from "lucide-react";
+import { Loader, Mail, User2Icon, UserRound } from "lucide-react";
 import { Button } from "./ui/button";
 import {
   DropdownMenu,
@@ -38,7 +38,7 @@ export default function Navbar() {
       <div className="flex flex-row items-center">
         <ThemeToggle />
         {isPending ? (
-          <Loader2 className="animate-spin w-[68]" size={36} />
+          <Loader className="animate-spin w-[68]" size={36} />
         ) : session ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -74,7 +74,9 @@ export default function Navbar() {
           </DropdownMenu>
         ) : (
           <Link href={"/login"} className="hover:text-muted-foreground">
-            <LogIn size={18} />
+            <Button className="rounded-full ml-4">
+              sign in
+            </Button>
           </Link>
         )}
       </div>

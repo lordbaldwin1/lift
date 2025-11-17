@@ -2,7 +2,6 @@
 
 import { toast } from "sonner";
 import { Button } from "./ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
 import { useState } from "react";
 import type { DBWorkout, Sentiment } from "~/server/db/schema";
 import { updateWorkoutSentimentAction } from "~/server/actions/workout-actions";

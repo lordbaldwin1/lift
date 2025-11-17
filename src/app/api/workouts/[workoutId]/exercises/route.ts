@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { auth } from "~/server/auth/auth";
-import { selectExercises, selectWorkout } from "~/server/db/queries";
+import { selectExercisesWithSelection, selectWorkout } from "~/server/db/queries";
 
 
 export async function GET(_: Request, { params }: { params: Promise<{ workoutId: string }> }) {
@@ -35,7 +35,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ workoutId:
             );
         }
 
-        const exercises = await selectExercises(workoutId);
+        const exercises = await selectExercisesWithSelection(workoutId);
 
         return NextResponse.json(exercises);
     } catch (err) {

@@ -1,7 +1,7 @@
 import { asc, eq } from "drizzle-orm";
 import { db } from ".";
-import type { DBExercise, NewExercise, NewSet, NewWorkout, Sentiment } from "./schema";
-import { exercise, set, workout } from "./schema";
+import type { DBExercise, NewExercise, NewExerciseSelection, NewSet, NewWorkout, Sentiment } from "./schema";
+import { exercise, exerciseSelection, set, workout } from "./schema";
 
 export async function insertWorkout(newWorkout: NewWorkout) {
   const [row] = await db.insert(workout).values(newWorkout).returning();
@@ -30,6 +30,33 @@ export async function selectExercises(workoutId: string) {
   const rows = await db
     .select()
     .from(exercise)
+    .where(eq(exercise.workoutId, workoutId))
+    .orderBy(asc(exercise.order));
+  return rows;
+}
+
+export async function selectExercisesWithSelection(workoutId: string) {
+  const rows = await db
+    .select({
+      id: exercise.id,
+      note: exercise.note,
+      order: exercise.order,
+      repLowerBound: exercise.repLowerBound,
+      repUpperBound: exercise.repUpperBound,
+      createdAt: exercise.createdAt,
+      updatedAt: exercise.updatedAt,
+      workoutId: exercise.workoutId,
+      exerciseSelectionId: exercise.exerciseSelectionId,
+      exerciseSelection: {
+        id: exerciseSelection.id,
+        name: exerciseSelection.name,
+        category: exerciseSelection.category,
+        primaryMuscleGroup: exerciseSelection.primaryMuscleGroup,
+        secondaryMuscleGroup: exerciseSelection.secondaryMuscleGroup,
+      },
+    })
+    .from(exercise)
+    .innerJoin(exerciseSelection, eq(exercise.exerciseSelectionId, exerciseSelection.id))
     .where(eq(exercise.workoutId, workoutId))
     .orderBy(asc(exercise.order));
   return rows;
@@ -109,5 +136,25 @@ export async function updateWorkoutSentiment(workoudId: string, sentiment: Senti
   const [row] = await db.update(workout).set({
     sentiment: sentiment,
   }).where(eq(workout.id, workoudId)).returning();
+  return row;
+}
+
+export async function insertExerciseSelection(newExerciseSelection: NewExerciseSelection) {
+  const [row] = await db.insert(exerciseSelection).values(newExerciseSelection).returning();
+  return row;
+}
+
+export async function insertExerciseSelections(newExerciseSelections: NewExerciseSelection[]) {
+  const rows = await db.insert(exerciseSelection).values(newExerciseSelections).returning();
+  return rows;
+}
+
+export async function selectExerciseSelections() {
+  const rows = await db.select().from(exerciseSelection).orderBy(asc(exerciseSelection.name));
+  return rows;
+}
+
+export async function selectExerciseSelectionById(exerciseSelectionId: string) {
+  const [row] = await db.select().from(exerciseSelection).where(eq(exerciseSelection.id, exerciseSelectionId));
   return row;
 }

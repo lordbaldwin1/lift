@@ -1,13 +1,13 @@
 "use client";
 
-import type { DBExercise, DBSet, DBWorkout } from "~/server/db/schema";
+import type { DBExercise, DBSet, DBWorkout, ExerciseWithSelection } from "~/server/db/schema";
 import useWorkoutData from "./hooks/use-workout-data";
 import WorkoutButtonGroup from "./workout-button-group";
 import ExerciseList from "./exercise-list";
 
 type WorkoutTrackerProps = {
   initialWorkout: DBWorkout;
-  initialExercises: DBExercise[];
+  initialExercises: ExerciseWithSelection[];
   initialSets: DBSet[];
 };
 

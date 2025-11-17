@@ -1,18 +1,19 @@
 import { ArrowDown, ArrowUp, ChevronDownIcon } from "lucide-react";
 import { Button } from "../ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
-import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Calendar } from "../ui/calendar";
 import { useState } from "react";
 import { toast } from "sonner";
 import useWorkoutMutations from "./hooks/use-workout-mutations";
-import type { DBExercise, DBSet, DBWorkout } from "~/server/db/schema";
+import type { DBSet, DBWorkout, ExerciseWithSelection } from "~/server/db/schema";
+import useExerciseSelectionData from "./hooks/use-exercise-selection-data";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
 
 type WorkoutButtonGroupProps = {
   workout: DBWorkout,
-  exercises: DBExercise[],
+  exercises: ExerciseWithSelection[],
   sets: DBSet[],
 }
 export default function WorkoutButtonGroup({
@@ -21,33 +22,63 @@ export default function WorkoutButtonGroup({
   sets,
 }: WorkoutButtonGroupProps) {
   const [exerciseToAdd, setExerciseToAdd] = useState<{
-    name: string;
+    exerciseSelectionId: string;
     position: number;
-  }>({ name: "", position: exercises.length });
+    name: string;
+  }>({ exerciseSelectionId: "", position: exercises.length, name: "" });
+  const [open, setOpen] = useState(false);
   const [workoutCompleteOpen, setWorkoutCompleteOpen] = useState(false);
   const [workoutDate, setWorkoutDate] = useState<Date | undefined>(new Date());
+
+  const exerciseSelections = useExerciseSelectionData();
+
+  const selectedExercise = exerciseSelections.find(
+    (s) => s.id === exerciseToAdd.exerciseSelectionId
+  );
 
   const {
     addExerciseMutation,
     completeWorkoutMutation
-  } = useWorkoutMutations({ userId: workout.userId, workoutId: workout.id, exercises: exercises, sets: sets, })
+  } = useWorkoutMutations({ userId: workout.userId, workoutId: workout.id, exercises: exercises, sets: sets, });
+
   function handleAddExercise() {
-    if (exerciseToAdd.name.length === 0) {
-      toast.error("You must enter an exercise name");
+    if (exerciseToAdd.exerciseSelectionId.length === 0) {
+      toast.error("You must select an exercise.");
+      return;
+    }
+
+    if (exerciseToAdd.position > exercises.length
+    || exerciseToAdd.position < 0
+    ) {
+      toast.error("Select a position to add exercise.");
       return;
     }
 
     addExerciseMutation.mutate(
-      { name: exerciseToAdd.name, order: exerciseToAdd.position },
+      { exerciseSelectionId: exerciseToAdd.exerciseSelectionId, order: exerciseToAdd.position, name: exerciseToAdd.name },
       {
         onSuccess: () => {
-          setExerciseToAdd({ name: "", position: 0 });
+          setExerciseToAdd({ exerciseSelectionId: "", position: exercises.length + 1, name: "" });
         },
       }
     );
   }
 
   function handleCompleteWorkout() {
+    if (exercises.length < 1) {
+      toast.error("You must have completed at least 1 exercise.");
+      return;
+    }
+    if (sets.length < 1) {
+      toast.error("You must have completed at least 1 set.");
+      return;
+    }
+    for (const set of sets) {
+      if (!set.reps || !set.weight) {
+        toast.error("You have unfilled weight/rep data. Either remove the empty set or fill in the weight/reps.");
+        return;
+      }
+    }
     completeWorkoutMutation.mutate(workoutDate ?? new Date());
   }
 
@@ -58,7 +89,7 @@ export default function WorkoutButtonGroup({
     <div className="flex flex-col items-center space-y-2">
       <Dialog>
         <DialogTrigger asChild>
-          <Button className="w-1/4" disabled={workout.completed}>
+          <Button className="w-1/2" disabled={workout.completed}>
             add exercise
           </Button>
         </DialogTrigger>
@@ -74,24 +105,40 @@ export default function WorkoutButtonGroup({
               <Label htmlFor="link" className="sr-only">
                 Link
               </Label>
-              <Input
-                id="link"
-                type="text"
-                value={exerciseToAdd.name}
-                onChange={(e) =>
-                  setExerciseToAdd((prev) => ({
-                    ...prev,
-                    name: e.target.value,
-                  }))
-                }
-                placeholder="incline dumbell press"
-                disabled={workout.completed || isAddingExercise}
-              />
+              <Popover open={open} onOpenChange={setOpen} modal={true}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" role="combobox">
+                    {selectedExercise?.name || "Select exercise..."}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="p-0">
+                  <Command className="max-h-[300px]">
+                    <CommandInput placeholder="Search exercises..." />
+                    <CommandList className="max-h-[250px] overflow-y-auto">
+                      <CommandEmpty>No exercise found.</CommandEmpty>
+                      <CommandGroup>
+                        {exerciseSelections.map((selection) => (
+                          <CommandItem
+                            key={selection.id}
+                            value={selection.name}
+                            onSelect={(value) => {
+                              setExerciseToAdd({ ...exerciseToAdd, exerciseSelectionId: selection.id, name: selection.name });
+                              setOpen(false);
+                            }}
+                          >
+                            {selection.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
           {exercises.map((exercise, i) => (
             <div key={exercise.id} className="flex items-center justify-between">
-              <span>{exercise.name}</span>
+              <span>{exercise.exerciseSelection.name}</span>
               <div className="space-x-1">
                 <Button
                   variant={"ghost"}
@@ -144,7 +191,7 @@ export default function WorkoutButtonGroup({
 
       <Dialog>
         <DialogTrigger asChild>
-          <Button className="w-1/4" disabled={workout.completed || isCompletingWorkout}>
+          <Button className="w-1/2" disabled={workout.completed || isCompletingWorkout}>
             complete workout
           </Button>
         </DialogTrigger>
