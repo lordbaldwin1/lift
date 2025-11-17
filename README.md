@@ -25,6 +25,7 @@ my personal hypertrophy training app
 - [x] break workout-tracker into multiple components (maybe?)
 - [x] fix complete workout functionality after react query refactor
 - [x] add ExerciseSelection table, add reference in exercises table
+- [ ] make new set button be disabled while adding exercise
 - [ ] add PR table (see below)
 - [ ] add check upon workout completion to see if PR was hit
 - [ ] add workout breakdown to workout complete page

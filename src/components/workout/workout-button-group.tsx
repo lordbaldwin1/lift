@@ -25,7 +25,7 @@ export default function WorkoutButtonGroup({
     exerciseSelectionId: string;
     position: number;
     name: string;
-  }>({ exerciseSelectionId: "", position: exercises.length, name: "" });
+  }>({ exerciseSelectionId: "", position: 0, name: "" });
   const [open, setOpen] = useState(false);
   const [workoutCompleteOpen, setWorkoutCompleteOpen] = useState(false);
   const [workoutDate, setWorkoutDate] = useState<Date | undefined>(new Date());
@@ -58,7 +58,7 @@ export default function WorkoutButtonGroup({
       { exerciseSelectionId: exerciseToAdd.exerciseSelectionId, order: exerciseToAdd.position, name: exerciseToAdd.name },
       {
         onSuccess: () => {
-          setExerciseToAdd({ exerciseSelectionId: "", position: exercises.length + 1, name: "" });
+          setExerciseToAdd({ exerciseSelectionId: "", position: 0, name: "" });
         },
       }
     );

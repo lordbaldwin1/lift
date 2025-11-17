@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "./ui/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
-import { Textarea } from "./ui/textarea";
-import useWorkoutData from "./workout/hooks/use-workout-data";
+import { Button } from "../ui/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import { Textarea } from "../ui/textarea";
+import useWorkoutData from "./hooks/use-workout-data";
 import type { DBSet, DBWorkout, ExerciseWithSelection } from "~/server/db/schema";
-import useWorkoutMutations from "./workout/hooks/use-workout-mutations";
+import useWorkoutMutations from "./hooks/use-workout-mutations";
 
 type ExerciseButtonGroupProps = {
   workout: DBWorkout;
@@ -27,6 +27,7 @@ export default function ExerciseButtonGroup({
   const {
     addSetMutation,
     updateExerciseNoteMutation,
+    addExerciseMutation,
   } = useWorkoutMutations({ userId: workout.userId, workoutId: workout.id, exercises: exercises, sets: sets });
 
   function handleAddSet(exerciseId: string) {
@@ -57,13 +58,14 @@ export default function ExerciseButtonGroup({
   const exerciseNote = localExerciseNotes[exercise.id] ?? exercise.note ?? "";
   const isSavingNote = updateExerciseNoteMutation.isPending &&
     updateExerciseNoteMutation.variables?.exerciseId === exercise.id;
+  const isAddingExercise = exercise.id.startsWith("temp-");
   return (
     <div className="mt-8 flex items-center justify-center">
       <Button
         variant={"outline"}
         className="w-1/4 rounded-none rounded-l-lg"
         onClick={() => handleAddSet(exercise.id)}
-        disabled={workout.completed}
+        disabled={workout.completed || isAddingExercise}
       >
         new set
       </Button>

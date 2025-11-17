@@ -1,5 +1,5 @@
 import type { DBExercise, DBSet, DBWorkout, ExerciseWithSelection } from "~/server/db/schema";
-import ExerciseButtonGroup from "../exercise-button-group";
+import ExerciseButtonGroup from "./exercise-button-group";
 import { Button } from "../ui/button";
 import SetRow from "./set-row";
 import useWorkoutData from "./hooks/use-workout-data";
