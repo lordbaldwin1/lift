@@ -4,7 +4,7 @@ import { auth } from "~/server/auth/auth";
 import { selectSetsByWorkout, selectWorkout } from "~/server/db/queries";
 
 
-export async function GET(request: Request, { params }: { params: Promise<{ workoutId: string }> }) {
+export async function GET(_: Request, { params }: { params: Promise<{ workoutId: string }> }) {
     try {
         const session = await auth.api.getSession({
             headers: await headers(),

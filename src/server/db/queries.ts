@@ -1,6 +1,6 @@
 import { asc, eq } from "drizzle-orm";
 import { db } from ".";
-import type { DBExercise, NewExercise, NewExerciseSelection, NewSet, NewWorkout, Sentiment } from "./schema";
+import type { NewExercise, NewExerciseSelection, NewSet, NewWorkout, Sentiment } from "./schema";
 import { exercise, exerciseSelection, set, workout } from "./schema";
 
 export async function insertWorkout(newWorkout: NewWorkout) {

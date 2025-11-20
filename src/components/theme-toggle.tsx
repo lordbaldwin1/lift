@@ -18,8 +18,8 @@ export function ThemeToggle() {
   return (
     <>
       <button onClick={handleToggleTheme} className="flex items-center hover:text-muted-foreground duration-200">
-        <Sun size={24} className="dark:scale-0 dark:-rotate-90" />
-        <Moon size={24} className="absolute dark:scale-100 dark:rotate-0 scale-0" />
+        <Sun size={18} className="dark:scale-0 dark:-rotate-90" />
+        <Moon size={18} className="absolute dark:scale-100 dark:rotate-0 scale-0" />
         <span className="sr-only">Toggle theme</span>
       </button>
     </>

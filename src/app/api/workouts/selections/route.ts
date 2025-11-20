@@ -15,7 +15,7 @@ export async function GET(_: Request) {
     
     return NextResponse.json(selections);
   } catch (err) {
-    console.error("Error fetching exercise selections");
+    console.error("Error fetching exercise selections:", (err as Error).message);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

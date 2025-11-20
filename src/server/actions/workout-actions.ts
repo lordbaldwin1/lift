@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { auth } from "../auth/auth";
-import { completeWorkout, deleteExercise, deleteSet, insertExercise, insertExerciseSelection, insertExerciseSelections, insertSet, insertWorkout, selectExerciseSelections, updateExerciseNote, updateExerciseOrder, updateSet, updateSetOrder, updateWorkoutSentiment, selectExercises } from "../db/queries";
+import { completeWorkout, deleteExercise, deleteSet, insertExercise, insertExerciseSelections, insertSet, insertWorkout, updateExerciseNote, updateExerciseOrder, updateSet, updateSetOrder, updateWorkoutSentiment, selectExercises } from "../db/queries";
 import type { WorkoutTemplate } from "~/app/workout/create/page";
 import type { DBExercise, DBSet, NewExercise, NewExerciseSelection, NewSet, Sentiment } from "../db/schema";
 

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import RateWorkout from "~/components/rate-workout";
 import { selectExercisesWithSelection, selectSetsByWorkout, selectWorkout } from "~/server/db/queries";
-import type { DBExercise, DBSet, ExerciseWithSelection } from "~/server/db/schema";
+import type { DBSet, ExerciseWithSelection } from "~/server/db/schema";
 
 
 export default async function CompletedWorkoutPage({

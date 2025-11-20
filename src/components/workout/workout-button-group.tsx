@@ -1,3 +1,5 @@
+"use client";
+
 import { ArrowDown, ArrowUp, ChevronDownIcon } from "lucide-react";
 import { Button } from "../ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
@@ -10,16 +12,17 @@ import useWorkoutMutations from "./hooks/use-workout-mutations";
 import type { DBSet, DBWorkout, ExerciseWithSelection } from "~/server/db/schema";
 import useExerciseSelectionData from "./hooks/use-exercise-selection-data";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
+import useWorkoutData from "./hooks/use-workout-data";
 
 type WorkoutButtonGroupProps = {
   workout: DBWorkout,
-  exercises: ExerciseWithSelection[],
-  sets: DBSet[],
+  initialExercises: ExerciseWithSelection[],
+  initialSets: DBSet[],
 }
 export default function WorkoutButtonGroup({
   workout,
-  exercises,
-  sets,
+  initialExercises,
+  initialSets,
 }: WorkoutButtonGroupProps) {
   const [exerciseToAdd, setExerciseToAdd] = useState<{
     exerciseSelectionId: string;
@@ -35,6 +38,11 @@ export default function WorkoutButtonGroup({
   const selectedExercise = exerciseSelections.find(
     (s) => s.id === exerciseToAdd.exerciseSelectionId
   );
+
+  const {
+    exercises,
+    sets,
+  } = useWorkoutData({ workoutId: workout.id, initialExercises: initialExercises, initialSets: initialSets });
 
   const {
     addExerciseMutation,
@@ -108,7 +116,7 @@ export default function WorkoutButtonGroup({
               <Popover open={open} onOpenChange={setOpen} modal={true}>
                 <PopoverTrigger asChild>
                   <Button variant="outline" role="combobox">
-                    {selectedExercise?.name || "Select exercise..."}
+                    {selectedExercise?.name ?? "Select exercise..."}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="p-0">
@@ -121,7 +129,7 @@ export default function WorkoutButtonGroup({
                           <CommandItem
                             key={selection.id}
                             value={selection.name}
-                            onSelect={(value) => {
+                            onSelect={() => {
                               setExerciseToAdd({ ...exerciseToAdd, exerciseSelectionId: selection.id, name: selection.name });
                               setOpen(false);
                             }}

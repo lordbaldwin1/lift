@@ -32,7 +32,7 @@ export default function useWorkoutData({ workoutId, initialExercises, initialSet
         sets,
         getSetsForExercise,
         isLoading: isLoadingExercises || isLoadingSets,
-        error: exercisesError || setsError,
+        error: exercisesError ?? setsError,
     }
 }
 

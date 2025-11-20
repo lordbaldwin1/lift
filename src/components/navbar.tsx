@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ThemeToggle } from "./theme-toggle";
-import { DumbbellIcon, Loader, Mail, User2Icon, UserRound } from "lucide-react";
+import { Loader, User2Icon, UserRound } from "lucide-react";
 import { Button } from "./ui/button";
 import {
   DropdownMenu,
@@ -16,7 +16,6 @@ import {
 } from "~/components/ui/dropdown-menu"
 import { authClient, signOut } from "~/server/auth/auth-client";
 import Image from "next/image";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 
 export default function Navbar() {
   const {
@@ -38,7 +37,7 @@ export default function Navbar() {
           Workouts
         </Link>
       </div>
-      <div className="flex flex-row">
+      <div className="flex flex-row space-x-6">
         <ThemeToggle />
         {isPending ? (
           <Button variant={"link"} className="w-[64]">
@@ -76,7 +75,7 @@ export default function Navbar() {
         ) : (
           <Link href={"/login"} className="hover:text-muted-foreground">
             <Button className="rounded-full ml-4">
-              sign in
+              Sign in
             </Button>
           </Link>
         )}

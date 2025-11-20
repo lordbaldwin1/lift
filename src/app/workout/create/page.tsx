@@ -8,7 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import type { Workout } from "../../../components/workout/workout-tracker";
 import { createWorkout } from "~/server/actions/workout-actions";
 import { toast } from "sonner";
 

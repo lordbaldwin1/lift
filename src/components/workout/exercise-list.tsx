@@ -1,4 +1,10 @@
-import type { DBExercise, DBSet, DBWorkout, ExerciseWithSelection } from "~/server/db/schema";
+"use client";
+
+import type {
+  DBSet,
+  DBWorkout,
+  ExerciseWithSelection,
+} from "~/server/db/schema";
 import ExerciseButtonGroup from "./exercise-button-group";
 import { Button } from "../ui/button";
 import SetRow from "./set-row";
@@ -8,31 +14,43 @@ import useWorkoutMutations from "./hooks/use-workout-mutations";
 
 type ExerciseListProps = {
   workout: DBWorkout;
-  exercises: ExerciseWithSelection[];
-  sets: DBSet[];
-}
+  initialExercises: ExerciseWithSelection[];
+  initialSets: DBSet[];
+};
 export default function ExerciseList({
   workout,
-  exercises,
-  sets,
+  initialExercises,
+  initialSets,
 }: ExerciseListProps) {
+  
+  const { exercises, sets } = useWorkoutData({
+    workoutId: workout.id,
+    initialExercises,
+    initialSets,
+  });
+  const { getSetsForExercise } = useWorkoutData({
+    workoutId: workout.id,
+    initialExercises: exercises,
+    initialSets: sets,
+  });
 
-  const {
-    getSetsForExercise,
-  } = useWorkoutData({ workoutId: workout.id, initialExercises: exercises, initialSets: sets });
-
-  const {
-    deleteExerciseMutation,
-  } = useWorkoutMutations({ userId: workout.userId, workoutId: workout.id, exercises: exercises, sets: sets })
+  const { deleteExerciseMutation } = useWorkoutMutations({
+    userId: workout.userId,
+    workoutId: workout.id,
+    exercises: exercises,
+    sets: sets,
+  });
 
   function handleDeleteExercise(exerciseId: string) {
     deleteExerciseMutation.mutate(exerciseId);
   }
+
   return (
     <>
       {exercises.map((exercise) => {
         const exerciseSets = getSetsForExercise(exercise.id);
-        const isDeleting = deleteExerciseMutation.isPending &&
+        const isDeleting =
+          deleteExerciseMutation.isPending &&
           deleteExerciseMutation.variables === exercise.id;
         const isPending = exercise.id.startsWith("temp-");
 
@@ -43,7 +61,7 @@ export default function ExerciseList({
           >
             <div className="flex flex-row justify-between text-xl">
               <div className="flex flex-row items-center gap-2">
-              <Button
+                <Button
                   variant={"ghost"}
                   onClick={() => handleDeleteExercise(exercise.id)}
                   disabled={workout.completed || isDeleting || isPending}
@@ -54,12 +72,26 @@ export default function ExerciseList({
               </div>
             </div>
             {exerciseSets.map((set, sIdx) => {
-              return <SetRow key={sIdx} workout={workout} exercises={exercises} sets={sets} set={set} sIdx={sIdx} />
+              return (
+                <SetRow
+                  key={sIdx}
+                  workout={workout}
+                  exercises={exercises}
+                  sets={sets}
+                  set={set}
+                  sIdx={sIdx}
+                />
+              );
             })}
-            <ExerciseButtonGroup workout={workout} exercises={exercises} sets={sets} exercise={exercise} />
+            <ExerciseButtonGroup
+              workout={workout}
+              exercises={exercises}
+              sets={sets}
+              exercise={exercise}
+            />
           </div>
         );
       })}
     </>
-  )
+  );
 }
