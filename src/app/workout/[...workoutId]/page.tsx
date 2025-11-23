@@ -27,19 +27,19 @@ export default async function WorkoutPage({
     <main className="mt-8 flex flex-col items-center space-y-6">
       <WorkoutHeader title={workout.title} description={workout.description} />
       <main className="w-full">
-      <section className="flex w-full flex-col space-y-12">
-        <ExerciseList
-          workout={workout}
-          initialExercises={exercises}
-          initialSets={sets}
-        />
-        <WorkoutButtonGroup
-          workout={workout}
-          initialExercises={exercises}
-          initialSets={sets}
-        />
-      </section>
-    </main>
+        <section className="flex w-full flex-col space-y-12">
+          <ExerciseList
+            workout={workout}
+            initialExercises={exercises}
+            initialSets={sets}
+          />
+          <WorkoutButtonGroup
+            workout={workout}
+            initialExercises={exercises}
+            initialSets={sets}
+          />
+        </section>
+      </main>
     </main>
   );
 }

@@ -1,4 +1,12 @@
-import { pgTable, text, timestamp, boolean, uuid, integer, pgEnum } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  timestamp,
+  boolean,
+  uuid,
+  integer,
+  pgEnum,
+} from "drizzle-orm/pg-core";
 
 const sentimentEnum = pgEnum("sentiment", ["good", "medium", "bad"]);
 
@@ -32,7 +40,9 @@ export const workout = pgTable("workout", {
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
-  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
 });
 
 export type NewWorkout = typeof workout.$inferInsert;
@@ -49,8 +59,12 @@ export const exercise = pgTable("exercise", {
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
-  workoutId: uuid("workout_id").notNull().references(() => workout.id, { onDelete: "cascade" }),
-  exerciseSelectionId: uuid("exercise_selection_id").notNull().references(() => exerciseSelection.id, { onDelete: "restrict"})
+  workoutId: uuid("workout_id")
+    .notNull()
+    .references(() => workout.id, { onDelete: "cascade" }),
+  exerciseSelectionId: uuid("exercise_selection_id")
+    .notNull()
+    .references(() => exerciseSelection.id, { onDelete: "restrict" }),
 });
 
 export type NewExercise = typeof exercise.$inferInsert;
@@ -86,11 +100,27 @@ export const set = pgTable("set", {
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
-  exerciseId: uuid("exercise_id").notNull().references(() => exercise.id, { onDelete: "cascade" }),
+  exerciseId: uuid("exercise_id")
+    .notNull()
+    .references(() => exercise.id, { onDelete: "cascade" }),
 });
 
 export type NewSet = typeof set.$inferInsert;
 export type DBSet = typeof set.$inferSelect;
+
+export const personalRecord = pgTable("personal_record", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  workoutId: uuid("workout_id")
+    .notNull()
+    .references(() => workout.id, { onDelete: "cascade" }),
+  exerciseSelectionId: uuid("exercise_selection_id")
+    .notNull()
+    .references(() => exerciseSelection.id, { onDelete: "cascade" }),
+  setId: uuid("set_id").notNull().references(() => set.id, { onDelete: "cascade" }),
+});
+
+export type NewPersonalRecord = typeof personalRecord.$inferInsert;
+export type PersonalRecord = typeof personalRecord.$inferSelect;
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
