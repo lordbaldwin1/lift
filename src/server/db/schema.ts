@@ -110,6 +110,7 @@ export type DBSet = typeof set.$inferSelect;
 
 export const personalRecord = pgTable("personal_record", {
   id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
   workoutId: uuid("workout_id")
     .notNull()
     .references(() => workout.id, { onDelete: "cascade" }),

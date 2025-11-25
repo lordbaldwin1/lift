@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { auth } from "../auth/auth";
-import { completeWorkout, deleteExercise, deleteSet, insertExercise, insertExerciseSelections, insertSet, insertWorkout, updateExerciseNote, updateExerciseOrder, updateSet, updateSetOrder, updateWorkoutSentiment, selectExercises } from "../db/queries";
+import { completeWorkout, deleteExercise, deleteSet, insertExercise, insertExerciseSelections, insertSet, insertWorkout, updateExerciseNote, updateExerciseOrder, updateSet, updateSetOrder, updateWorkoutSentiment, selectExercises, selectPRsForUser, selectSetsByWorkout } from "../db/queries";
 import type { WorkoutTemplate } from "~/app/workout/create/page";
 import type { DBExercise, DBSet, NewExercise, NewExerciseSelection, NewSet, Sentiment } from "../db/schema";
 
@@ -207,6 +207,16 @@ export async function completeWorkoutAction(userId: string, workoutId: string, w
 
   if (session.user.id !== userId) {
     throw new Error("You cannot complete other peoples' workouts");
+  }
+
+  // detect if PR happened
+  const personalRecords = await selectPRsForUser(userId);
+  const sets = await selectSetsByWorkout(workoutId);
+  const bestSets: Record<string, { reps: number, weight: number }> = {};
+
+  for (const set of sets) {
+    bestSets[set.exerciseId] ??= { reps: 0, weight: 0 };
+    //if ()
   }
 
   await completeWorkout(workoutId, workoutDate);

@@ -45,7 +45,7 @@ export default function RateWorkout(props: RateWorkoutProps) {
   return (
     <div className="mt-12 flex w-full justify-center items-center flex-col space-y-6">
       <h1 className="text-center text-2xl font-bold">
-        Your workout is complete
+        Your {workout.title} is complete
       </h1>
       <Card className="max-w-md w-full flex space-y-6">
         <CardHeader className="flex justify-center">

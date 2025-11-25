@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   selectExercisesWithSelection,
   selectSetsByWorkout,
+  selectSetsByWorkoutWithExerciseSelection,
   selectWorkout,
 } from "~/server/db/queries";
 import type { DBSet, ExerciseWithSelection } from "~/server/db/schema";
@@ -27,17 +28,20 @@ export default async function CompletedWorkoutPage({
   return (
     <main className="flex flex-col items-center justify-center space-y-12">
       <RateWorkout workout={workout} />
-      <WorkoutBreakdown exercises={exercises} sets={sets} />
+      <WorkoutBreakdown workoutId={workout.id} exercises={exercises} sets={sets} />
     </main>
   );
 }
 
 type WorkoutBreakdownProps = {
+  workoutId: string;
   exercises: ExerciseWithSelection[];
   sets: DBSet[];
 };
 
-function WorkoutBreakdown({ exercises, sets }: WorkoutBreakdownProps) {
+async function WorkoutBreakdown({ workoutId, exercises, sets }: WorkoutBreakdownProps) {
+  const setsPerMuscleGroup = await calculateSetsPerMuscleGroup(workoutId);
+
   return (
     <div className="w-full space-y-6">
       <h1 className="text-center text-2xl font-bold">Workout breakdown</h1>
@@ -59,13 +63,39 @@ function WorkoutBreakdown({ exercises, sets }: WorkoutBreakdownProps) {
         <CardHeader>
           <CardTitle>Sets by muscle group</CardTitle>
         </CardHeader>
+        <CardContent>
+          {Object.entries(setsPerMuscleGroup).map((muscle, i) => (
+            <div key={i}>
+            <h1>{toUpperFirstChar(muscle[0])}</h1>
+            <p>{muscle[1]}</p>
+            </div>
+          ))}
+        </CardContent>
       </Card>
     </div>
   );
 }
 
-function calculateSetsPerMuscleGroup(exercises: ExerciseWithSelection[]) {
-  const res = {
-    
+function toUpperFirstChar(str: string) {
+  if (str.length === 0) return "";
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+type SetsPerMuscleGroup = Record<string, number>;
+
+async function calculateSetsPerMuscleGroup(workoutId: string) {
+  const res: SetsPerMuscleGroup = {};
+
+  const sets = await selectSetsByWorkoutWithExerciseSelection(workoutId);
+
+  for (const set of sets) {
+    const primaryMuscleGroup = set.exerciseSelection.primaryMuscleGroup;
+    const secondaryMuscleGroup = set.exerciseSelection.secondaryMuscleGroup;
+
+    res[primaryMuscleGroup] = (res[primaryMuscleGroup] ?? 0) + 1;
+    if (!secondaryMuscleGroup) continue;
+    res[secondaryMuscleGroup] = (res[secondaryMuscleGroup] ?? 0) + 0.5;
   }
+
+  return res;
 }
