@@ -1,4 +1,4 @@
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { db } from ".";
 import type {
   NewExercise,
@@ -264,5 +264,41 @@ export async function selectExerciseSelectionById(exerciseSelectionId: string) {
 
 export async function selectPRsForUser(userId: string) {
   const rows = await db.select().from(personalRecord).where(eq(personalRecord.userId, userId));
+  return rows;
+}
+
+export async function selectSetsWithPersonalRecords(workoutId: string, userId: string) {
+  const rows = await db
+    .select({
+      id: set.id,
+      reps: set.reps,
+      weight: set.weight,
+      targetReps: set.targetReps,
+      targetWeight: set.targetWeight,
+      order: set.order,
+      createdAt: set.createdAt,
+      updatedAt: set.updatedAt,
+      exerciseId: set.exerciseId,
+      personalRecord: {
+        id: personalRecord.id,
+        reps: sql<number | null>`pr_set.reps`,
+        weight: sql<number | null>`pr_set.weight`,
+      },
+    })
+    .from(set)
+    .innerJoin(exercise, eq(set.exerciseId, exercise.id))
+    .leftJoin(
+      personalRecord,
+      and(
+        eq(exercise.exerciseSelectionId, personalRecord.exerciseSelectionId),
+        eq(personalRecord.userId, userId)
+      )
+    )
+    .leftJoin(
+      sql`${set} as pr_set`,
+      eq(personalRecord.setId, sql`pr_set.id`)
+    )
+    .where(eq(exercise.workoutId, workoutId))
+    .orderBy(asc(set.order));
   return rows;
 }

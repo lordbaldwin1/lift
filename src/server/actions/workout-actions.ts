@@ -212,11 +212,18 @@ export async function completeWorkoutAction(userId: string, workoutId: string, w
   // detect if PR happened
   const personalRecords = await selectPRsForUser(userId);
   const sets = await selectSetsByWorkout(workoutId);
-  const bestSets: Record<string, { reps: number, weight: number }> = {};
+  const bestSets: Record<string, { reps: number | null, weight: number | null }> = {};
 
   for (const set of sets) {
+    if (!set.weight || !set.reps) continue;
     bestSets[set.exerciseId] ??= { reps: 0, weight: 0 };
-    //if ()
+    if (!bestSets[set.exerciseId]) continue;
+    if (!bestSets[set.exerciseId].weight) continue;
+
+    if (bestSets[set.exerciseId]!.weight < set.weight) {
+      bestSets[set.exerciseId]?.reps = set.reps;
+      bestSets[set.exerciseId]?.weight = set.weight;
+    }
   }
 
   await completeWorkout(workoutId, workoutDate);
