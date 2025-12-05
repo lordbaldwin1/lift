@@ -3,6 +3,7 @@ import { db } from ".";
 import type {
   NewExercise,
   NewExerciseSelection,
+  NewPersonalRecord,
   NewSet,
   NewWorkout,
   Sentiment,
@@ -265,6 +266,24 @@ export async function selectExerciseSelectionById(exerciseSelectionId: string) {
 export async function selectPRsForUser(userId: string) {
   const rows = await db.select().from(personalRecord).where(eq(personalRecord.userId, userId));
   return rows;
+}
+
+export async function selectPRsForUserAndExerciseSelection(userId: string, exerciseSelectionId: string) {
+  const rows = await db
+    .select()
+    .from(personalRecord)
+    .where(
+      and(
+        eq(personalRecord.userId, userId),
+        eq(personalRecord.exerciseSelectionId, exerciseSelectionId)
+      )
+    );
+  return rows;
+}
+
+export async function insertPersonalRecord(newPR: NewPersonalRecord) {
+  const [row] = await db.insert(personalRecord).values(newPR).returning();
+  return row;
 }
 
 export async function selectSetsWithPersonalRecords(workoutId: string, userId: string) {

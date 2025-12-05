@@ -118,6 +118,9 @@ export const personalRecord = pgTable("personal_record", {
     .notNull()
     .references(() => exerciseSelection.id, { onDelete: "cascade" }),
   setId: uuid("set_id").notNull().references(() => set.id, { onDelete: "cascade" }),
+  weight: integer("weight").notNull(),
+  reps: integer("reps").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export type NewPersonalRecord = typeof personalRecord.$inferInsert;

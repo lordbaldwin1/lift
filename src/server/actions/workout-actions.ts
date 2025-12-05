@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { auth } from "../auth/auth";
-import { completeWorkout, deleteExercise, deleteSet, insertExercise, insertExerciseSelections, insertSet, insertWorkout, updateExerciseNote, updateExerciseOrder, updateSet, updateSetOrder, updateWorkoutSentiment, selectExercises, selectPRsForUser, selectSetsByWorkout } from "../db/queries";
+import { completeWorkout, deleteExercise, deleteSet, insertExercise, insertExerciseSelections, insertPersonalRecord, insertSet, insertWorkout, selectExercisesWithSelection, selectPRsForUserAndExerciseSelection, selectSetsByWorkoutWithExerciseSelection, updateExerciseNote, updateExerciseOrder, updateSet, updateSetOrder, updateWorkoutSentiment, selectExercises } from "../db/queries";
 import type { WorkoutTemplate } from "~/app/workout/create/page";
 import type { DBExercise, DBSet, NewExercise, NewExerciseSelection, NewSet, Sentiment } from "../db/schema";
 
@@ -209,13 +209,73 @@ export async function completeWorkoutAction(userId: string, workoutId: string, w
     throw new Error("You cannot complete other peoples' workouts");
   }
 
-  // detect if PR happened
-  const personalRecords = await selectPRsForUser(userId);
-  const sets = await selectSetsByWorkout(workoutId);
-  const bestSets: Record<string, { reps: number | null, weight: number | null }> = {};
+  // Get all sets with exercise selection info
+  const setsWithSelection = await selectSetsByWorkoutWithExerciseSelection(workoutId);
+  const exercisesWithSelection = await selectExercisesWithSelection(workoutId);
 
-  for (const set of sets) {
-    bestSets[set.exerciseId]
+  // Find top set (highest weight) for each exercise
+  // If multiple sets share highest weight, use the one with most reps
+  type TopSet = {
+    setId: string;
+    exerciseSelectionId: string;
+    weight: number;
+    reps: number;
+  };
+  const topSetsByExercise: Record<string, TopSet> = {};
+
+  for (const set of setsWithSelection) {
+    // Skip sets without weight or reps
+    if (set.weight === null || set.reps === null) continue;
+
+    const exercise = exercisesWithSelection.find(ex => ex.id === set.exerciseId);
+    if (!exercise) continue;
+
+    const exerciseId = set.exerciseId;
+    const current = topSetsByExercise[exerciseId];
+
+    if (!current) {
+      topSetsByExercise[exerciseId] = {
+        setId: set.id,
+        exerciseSelectionId: exercise.exerciseSelectionId,
+        weight: set.weight,
+        reps: set.reps,
+      };
+    } else {
+      // Compare: prefer higher weight, or if same weight, higher reps
+      if (set.weight > current.weight || 
+          (set.weight === current.weight && set.reps > current.reps)) {
+        topSetsByExercise[exerciseId] = {
+          setId: set.id,
+          exerciseSelectionId: exercise.exerciseSelectionId,
+          weight: set.weight,
+          reps: set.reps,
+        };
+      }
+    }
+  }
+
+  // Check each top set against existing PRs and insert new PRs if qualified
+  for (const topSet of Object.values(topSetsByExercise)) {
+    const existingPRs = await selectPRsForUserAndExerciseSelection(userId, topSet.exerciseSelectionId);
+    
+    // Find if there's an existing PR at this exact weight
+    const prAtSameWeight = existingPRs.find(pr => pr.weight === topSet.weight);
+
+    // PR qualifies if:
+    // 1. No existing PR at this weight (new weight = automatic PR)
+    // 2. Existing PR at this weight but with fewer reps
+    const isPR = !prAtSameWeight || topSet.reps > prAtSameWeight.reps;
+
+    if (isPR) {
+      await insertPersonalRecord({
+        userId,
+        workoutId,
+        exerciseSelectionId: topSet.exerciseSelectionId,
+        setId: topSet.setId,
+        weight: topSet.weight,
+        reps: topSet.reps,
+      });
+    }
   }
 
   await completeWorkout(workoutId, workoutDate);
