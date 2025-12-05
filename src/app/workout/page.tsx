@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import Link from "next/link";
+import Calendar21 from "~/components/calendar-21";
 import { Button } from "~/components/ui/button";
 import { auth } from "~/server/auth/auth";
 import { selectWorkouts } from "~/server/db/queries";
@@ -28,7 +29,8 @@ export default async function WorkoutPage() {
     </div>;
   }
   return (
-    <main className="flex flex-col">
+    <main className="flex flex-col items-center space-y-4 mt-12">
+      <Calendar21 />
       {workouts.map((workout) => (
         <Link
           href={`/workout/${workout.id}`}

@@ -286,6 +286,27 @@ export async function insertPersonalRecord(newPR: NewPersonalRecord) {
   return row;
 }
 
+export async function selectPRsForWorkout(workoutId: string) {
+  const rows = await db
+    .select({
+      id: personalRecord.id,
+      weight: personalRecord.weight,
+      reps: personalRecord.reps,
+      createdAt: personalRecord.createdAt,
+      exerciseSelection: {
+        id: exerciseSelection.id,
+        name: exerciseSelection.name,
+      },
+    })
+    .from(personalRecord)
+    .innerJoin(
+      exerciseSelection,
+      eq(personalRecord.exerciseSelectionId, exerciseSelection.id)
+    )
+    .where(eq(personalRecord.workoutId, workoutId));
+  return rows;
+}
+
 export async function selectSetsWithPersonalRecords(workoutId: string, userId: string) {
   const rows = await db
     .select({
