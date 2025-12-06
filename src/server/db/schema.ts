@@ -69,6 +69,7 @@ export const exercise = pgTable("exercise", {
 
 export type NewExercise = typeof exercise.$inferInsert;
 export type DBExercise = typeof exercise.$inferSelect;
+
 export type ExerciseWithSelection = {
   id: string;
   note: string | null;

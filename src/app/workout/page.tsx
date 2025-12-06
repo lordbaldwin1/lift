@@ -1,9 +1,95 @@
 import { headers } from "next/headers";
 import Link from "next/link";
-import Calendar21 from "~/components/calendar-21";
+import WorkoutHistoryCalendar from "~/components/workout-history-calendar";
 import { Button } from "~/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
+import { ScrollArea } from "~/components/ui/scroll-area";
 import { auth } from "~/server/auth/auth";
-import { selectWorkouts } from "~/server/db/queries";
+import {
+  selectWorkouts,
+  selectWorkoutStats,
+  selectSetsPerMuscleGroupThisWeek,
+  selectAvgSetsPerMuscleGroupPerWeek,
+} from "~/server/db/queries";
+
+function StatCard({
+  title,
+  value,
+  subtitle,
+}: {
+  title: string;
+  value: string | number;
+  subtitle?: string;
+}) {
+  return (
+    <Card className="py-4">
+      <CardHeader>
+        <CardTitle className="text-sm font-medium text-muted-foreground">
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="text-3xl font-bold tracking-tight">{value}</div>
+        {subtitle && (
+          <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function MuscleGroupCard({
+  title,
+  data,
+  valueLabel,
+}: {
+  title: string;
+  data: { muscleGroup: string; value: number }[];
+  valueLabel: string;
+}) {
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+  const displayTotal = Number.isInteger(total) ? total : Math.round(total * 10) / 10;
+
+  return (
+    <Card className="py-4">
+      <CardHeader>
+        <CardTitle className="text-sm font-medium text-muted-foreground">
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {data.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No data yet</p>
+        ) : (
+          <div className="space-y-2">
+            {data.map((item) => (
+              <div
+                key={item.muscleGroup}
+                className="flex justify-between items-center text-sm"
+              >
+                <span className="capitalize">{item.muscleGroup}</span>
+                <span className="font-semibold">
+                  {item.value} {valueLabel}
+                </span>
+              </div>
+            ))}
+            <div className="flex justify-between items-center text-sm pt-2 border-t">
+              <span className="font-semibold">Total</span>
+              <span className="font-semibold">
+                {displayTotal} {valueLabel}
+              </span>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default async function WorkoutPage() {
   const session = await auth.api.getSession({
@@ -15,32 +101,118 @@ export default async function WorkoutPage() {
       <div className="flex h-[60vw] items-center justify-center">
         <Button variant={"link"} className="text-md">
           <Link href={"/login"}>Sign in to view your workouts.</Link>
-        </Button>{" "}
-        <span></span>
+        </Button>
       </div>
     );
   }
 
-  const workouts = await selectWorkouts(session.user.id);
+  const [workouts, stats, setsThisWeek, avgSetsPerWeek] = await Promise.all([
+    selectWorkouts(session.user.id),
+    selectWorkoutStats(session.user.id),
+    selectSetsPerMuscleGroupThisWeek(session.user.id),
+    selectAvgSetsPerMuscleGroupPerWeek(session.user.id),
+  ]);
 
-  if (workouts.length === 0) {
-    <div className="flex h-[70vw] items-center justify-center">
-      Your list of workouts will appear here.
-    </div>;
-  }
   return (
-    <main className="flex flex-col items-center space-y-4 mt-12">
-      <Calendar21 />
-      {workouts.map((workout) => (
-        <Link
-          href={`/workout/${workout.id}`}
-          key={workout.id}
-          className="hover:text-muted-foreground duration-200"
-        >
-          {workout.title} | {workout.createdAt.toDateString()}
+    <main className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="mb-8 flex justify-center">
+        <Link href="/workout/create">
+          <Button size="default" className="text-md px-8 py-6">
+            Start new workout
+          </Button>
         </Link>
-      ))}
-      <Link href={"/workout/create"}>create new workout</Link>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <StatCard
+          title="Total workouts"
+          value={stats.totalWorkouts}
+          subtitle="all time"
+        />
+        <StatCard
+          title="Workouts this year"
+          value={stats.workoutsThisYear}
+          subtitle={`in ${new Date().getFullYear()}`}
+        />
+        <StatCard
+          title="Workouts this week"
+          value={stats.workoutsThisWeek}
+          subtitle="since Sunday"
+        />
+        <StatCard
+          title="Average workouts"
+          value={stats.avgWorkoutsPerWeek}
+          subtitle="per week"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <MuscleGroupCard
+          title="Sets this week"
+          data={setsThisWeek}
+          valueLabel="sets"
+        />
+        <MuscleGroupCard
+          title="Avg sets per week"
+          data={avgSetsPerWeek}
+          valueLabel="sets"
+        />
+      </div>
+
+      <Card className="py-4 mb-6">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            Activity calendar
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex justify-center">
+          <WorkoutHistoryCalendar workouts={workouts} />
+        </CardContent>
+      </Card>
+
+      <Card className="py-4">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            Workout history
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {workouts.length === 0 ? (
+            <p className="text-muted-foreground text-center py-8">
+              Your workout history will appear here.
+            </p>
+          ) : (
+            <ScrollArea className="h-[300px]">
+              <div className="space-y-2 pr-4">
+                {workouts
+                  .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+                  .map((workout) => (
+                    <Link
+                      href={`/workout/${workout.id}`}
+                      key={workout.id}
+                      className="flex justify-between items-center p-3 rounded-lg border hover:bg-accent transition-colors"
+                    >
+                      <span className="font-medium">{workout.title}</span>
+                      <span className="text-sm text-muted-foreground">
+                        {workout.completedAt
+                          ? workout.completedAt.toLocaleDateString("en-US", {
+                              weekday: "short",
+                              month: "short",
+                              day: "numeric",
+                            })
+                          : workout.createdAt.toLocaleDateString("en-US", {
+                              weekday: "short",
+                              month: "short",
+                              day: "numeric",
+                            })}
+                      </span>
+                    </Link>
+                  ))}
+              </div>
+            </ScrollArea>
+          )}
+        </CardContent>
+      </Card>
     </main>
   );
 }

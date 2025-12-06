@@ -1,4 +1,4 @@
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, gte, sql, count, min } from "drizzle-orm";
 import { db } from ".";
 import type {
   NewExercise,
@@ -341,4 +341,189 @@ export async function selectSetsWithPersonalRecords(workoutId: string, userId: s
     .where(eq(exercise.workoutId, workoutId))
     .orderBy(asc(set.order));
   return rows;
+}
+
+export async function selectWorkoutStats(userId: string) {
+  const now = new Date();
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - now.getDay());
+  startOfWeek.setHours(0, 0, 0, 0);
+  
+  const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+  const allWorkouts = await db
+    .select({
+      completedAt: workout.completedAt,
+    })
+    .from(workout)
+    .where(and(eq(workout.userId, userId), eq(workout.completed, true)));
+
+  const totalWorkouts = allWorkouts.length;
+  const workoutsThisYear = allWorkouts.filter(
+    (w) => w.completedAt && w.completedAt >= startOfYear
+  ).length;
+  const workoutsThisWeek = allWorkouts.filter(
+    (w) => w.completedAt && w.completedAt >= startOfWeek
+  ).length;
+
+  let avgWorkoutsPerWeek = 0;
+  if (totalWorkouts > 0) {
+    const firstWorkout = await db
+      .select({ completedAt: min(workout.completedAt) })
+      .from(workout)
+      .where(and(eq(workout.userId, userId), eq(workout.completed, true)));
+    
+    const firstDate = firstWorkout[0]?.completedAt;
+    if (firstDate) {
+      const weeksSinceFirst = Math.max(
+        1,
+        Math.ceil((now.getTime() - firstDate.getTime()) / (7 * 24 * 60 * 60 * 1000))
+      );
+      avgWorkoutsPerWeek = Math.round((totalWorkouts / weeksSinceFirst) * 10) / 10;
+    }
+  }
+
+  return {
+    totalWorkouts,
+    workoutsThisYear,
+    workoutsThisWeek,
+    avgWorkoutsPerWeek,
+  };
+}
+
+export async function selectSetsPerMuscleGroupThisWeek(userId: string) {
+  const now = new Date();
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - now.getDay());
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  const rows = await db
+    .select({
+      primaryMuscleGroup: exerciseSelection.primaryMuscleGroup,
+      secondaryMuscleGroup: exerciseSelection.secondaryMuscleGroup,
+    })
+    .from(set)
+    .innerJoin(exercise, eq(set.exerciseId, exercise.id))
+    .innerJoin(workout, eq(exercise.workoutId, workout.id))
+    .innerJoin(exerciseSelection, eq(exercise.exerciseSelectionId, exerciseSelection.id))
+    .where(
+      and(
+        eq(workout.userId, userId),
+        eq(workout.completed, true),
+        gte(workout.completedAt, startOfWeek)
+      )
+    );
+
+  const muscleGroupSets: Record<string, number> = {};
+  for (const row of rows) {
+    muscleGroupSets[row.primaryMuscleGroup] = (muscleGroupSets[row.primaryMuscleGroup] ?? 0) + 1;
+    if (row.secondaryMuscleGroup) {
+      muscleGroupSets[row.secondaryMuscleGroup] = (muscleGroupSets[row.secondaryMuscleGroup] ?? 0) + 0.5;
+    }
+  }
+
+  return Object.entries(muscleGroupSets).map(([muscleGroup, value]) => ({
+    muscleGroup,
+    value: Math.round(value * 10) / 10,
+  }));
+}
+
+export async function selectAvgSetsPerMuscleGroupPerWeek(userId: string) {
+  const now = new Date();
+
+  const firstWorkout = await db
+    .select({ completedAt: min(workout.completedAt) })
+    .from(workout)
+    .where(and(eq(workout.userId, userId), eq(workout.completed, true)));
+
+  const firstDate = firstWorkout[0]?.completedAt;
+  if (!firstDate) {
+    return [];
+  }
+
+  const weeksSinceFirst = Math.max(
+    1,
+    Math.ceil((now.getTime() - firstDate.getTime()) / (7 * 24 * 60 * 60 * 1000))
+  );
+
+  const rows = await db
+    .select({
+      primaryMuscleGroup: exerciseSelection.primaryMuscleGroup,
+      secondaryMuscleGroup: exerciseSelection.secondaryMuscleGroup,
+    })
+    .from(set)
+    .innerJoin(exercise, eq(set.exerciseId, exercise.id))
+    .innerJoin(workout, eq(exercise.workoutId, workout.id))
+    .innerJoin(exerciseSelection, eq(exercise.exerciseSelectionId, exerciseSelection.id))
+    .where(and(eq(workout.userId, userId), eq(workout.completed, true)));
+
+  const muscleGroupSets: Record<string, number> = {};
+  for (const row of rows) {
+    muscleGroupSets[row.primaryMuscleGroup] = (muscleGroupSets[row.primaryMuscleGroup] ?? 0) + 1;
+    if (row.secondaryMuscleGroup) {
+      muscleGroupSets[row.secondaryMuscleGroup] = (muscleGroupSets[row.secondaryMuscleGroup] ?? 0) + 0.5;
+    }
+  }
+
+  return Object.entries(muscleGroupSets).map(([muscleGroup, totalSets]) => ({
+    muscleGroup,
+    value: Math.round((totalSets / weeksSinceFirst) * 10) / 10,
+  }));
+}
+
+export async function selectTotalSetsThisWeek(userId: string) {
+  const now = new Date();
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - now.getDay());
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  const [result] = await db
+    .select({
+      totalSets: count(set.id),
+    })
+    .from(set)
+    .innerJoin(exercise, eq(set.exerciseId, exercise.id))
+    .innerJoin(workout, eq(exercise.workoutId, workout.id))
+    .where(
+      and(
+        eq(workout.userId, userId),
+        eq(workout.completed, true),
+        gte(workout.completedAt, startOfWeek)
+      )
+    );
+
+  return Number(result?.totalSets ?? 0);
+}
+
+export async function selectAvgTotalSetsPerWeek(userId: string) {
+  const now = new Date();
+
+  // Get first completed workout date
+  const firstWorkout = await db
+    .select({ completedAt: min(workout.completedAt) })
+    .from(workout)
+    .where(and(eq(workout.userId, userId), eq(workout.completed, true)));
+
+  const firstDate = firstWorkout[0]?.completedAt;
+  if (!firstDate) {
+    return 0;
+  }
+
+  const weeksSinceFirst = Math.max(
+    1,
+    Math.ceil((now.getTime() - firstDate.getTime()) / (7 * 24 * 60 * 60 * 1000))
+  );
+
+  // Get total sets count
+  const [result] = await db
+    .select({
+      totalSets: count(set.id),
+    })
+    .from(set)
+    .innerJoin(exercise, eq(set.exerciseId, exercise.id))
+    .innerJoin(workout, eq(exercise.workoutId, workout.id))
+    .where(and(eq(workout.userId, userId), eq(workout.completed, true)));
+
+  const totalSets = Number(result?.totalSets ?? 0);
+  return Math.round((totalSets / weeksSinceFirst) * 10) / 10;
 }

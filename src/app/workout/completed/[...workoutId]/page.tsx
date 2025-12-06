@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import RateWorkout from "~/components/rate-workout";
+import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   selectExercisesWithSelection,
@@ -52,6 +54,11 @@ export default async function CompletedWorkoutPage({
         setsPerMuscleGroup={setsPerMuscleGroup}
         personalRecords={personalRecords}
       />
+      <Link className="mt-12" href={"/workout"}>
+        <Button>
+          View Workouts
+        </Button>
+      </Link>
     </main>
   );
 }
