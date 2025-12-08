@@ -1,6 +1,5 @@
 "use client";
 
-import { Dumbbell } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -14,19 +13,55 @@ import { toast } from "sonner";
 export type WorkoutTemplate = {
   title: string;
   description: string;
+  exercises: {
+    exerciseSelectionName: string;
+    sets: number;
+  }[];
 }
+
 const templates: WorkoutTemplate[] = [
   {
-    title: "push day",
-    description: "chest, shoulders, and triceps",
+    title: "Lordbaldwin1 push day",
+    description: "My personal push day for hitting chest, shoulders, and triceps. Includes 6 sets chest, 5 sets shoulders, 3 sets triceps.",
+    exercises: [
+      { exerciseSelectionName: "Incline Barbell Bench Press", sets: 2 },
+      { exerciseSelectionName: "Dumbbell Bench Press", sets: 2 },
+      { exerciseSelectionName: "Dumbbell Fly", sets: 2 },
+      { exerciseSelectionName: "Lateral Raise", sets: 5 },
+      { exerciseSelectionName: "Tricep Pushdown", sets: 3 },
+    ],
   },
   {
-    title: "pull day",
-    description: "back and biceps",
+    title: "Lordbaldwin pull day",
+    description: "My personal pull day for hitting back and biceps. Includes 4 sets upper/mid back, 4 sets lats, 2 sets traps, 4 sets biceps.",
+    exercises: [
+      { exerciseSelectionName: "Lat Pulldown", sets: 2 },
+      { exerciseSelectionName: "Seated Cable Row", sets: 2 },
+      { exerciseSelectionName: "Machine Row", sets: 2 },
+      { exerciseSelectionName: "Dumbbell Shrugs", sets: 2 },
+      { exerciseSelectionName: "Lat Prayer", sets: 2 },
+      { exerciseSelectionName: "Dumbbell Curl", sets: 4 },
+    ],
   },
   {
-    title: "leg day",
-    description: "quads, hamstrings, and calves",
+    title: "Lordbaldwin1 leg day, quad focused",
+    description: "My personal leg day for hitting quads, hamstrings, and calves.",
+    exercises: [
+      { exerciseSelectionName: "Hack Squat", sets: 4 },
+      { exerciseSelectionName: "Leg Curl", sets: 4 },
+      { exerciseSelectionName: "Leg Extension", sets: 4 },
+      { exerciseSelectionName: "Calf Raise", sets: 4 },
+    ],
+  },
+  {
+    title: "Lordbaldwin1 leg day, hamstring focused",
+    description: "My personal leg day for hitting hamstrings, quads, and calves.",
+    exercises: [
+      { exerciseSelectionName: "Romanian Deadlift", sets: 4 },
+      { exerciseSelectionName: "Leg Extension", sets: 4 },
+      { exerciseSelectionName: "Leg Curl", sets: 4 },
+      { exerciseSelectionName: "Calf Raise", sets: 4 },
+    ],
   },
 ];
 
@@ -46,13 +81,13 @@ export default function WorkoutCreatePage() {
   return (
     <main className="mt-8 flex flex-col items-center space-y-6">
       <div className="text-center space-y-2">
-        <h1 className="text-2xl">choose a template</h1>
+        <h1 className="text-2xl">Choose a template</h1>
         <p className="text-muted-foreground text-sm">
-          select a workout template to get started
+          Select a workout template to get started
         </p>
       </div>
 
-      <div className="grid w-full gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="flex w-full flex-col gap-4">
         {templates.map((template) => (
           <Card
             key={template.title}
@@ -60,10 +95,7 @@ export default function WorkoutCreatePage() {
             onClick={() => handleSelectTemplate(template)}
           >
             <CardHeader>
-              <div className="flex items-center gap-2 mb-2">
-                <Dumbbell size={20} />
-                <CardTitle>{template.title}</CardTitle>
-              </div>
+              <CardTitle>{template.title}</CardTitle>
               <CardDescription>{template.description}</CardDescription>
             </CardHeader>
           </Card>

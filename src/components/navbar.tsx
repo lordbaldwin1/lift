@@ -41,13 +41,13 @@ export default function Navbar() {
       <div className="flex flex-row space-x-6">
         <ThemeToggle />
         {isPending ? (
-          <Button variant={"link"} className="w-[64]">
+          <Button variant={"link"} className="p-0 w-8 h-8">
             <Loader className="animate-spin" size={32} />
           </Button>
         ) : session ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant={"link"} className="hover:text-muted-foreground">
+              <Button variant={"link"} className="hover:text-muted-foreground p-0 w-8 h-8">
                 {
                   session.user.image
                     ? <Image src={session.user.image} alt="your profile picture" width={32} height={32} className="rounded-full" />

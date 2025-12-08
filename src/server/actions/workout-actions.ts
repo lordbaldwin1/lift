@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { auth } from "../auth/auth";
-import { completeWorkout, deleteExercise, deleteSet, insertExercise, insertExerciseSelections, insertPersonalRecord, insertSet, insertWorkout, selectExercisesWithSelection, selectPRsForUserAndExerciseSelection, selectSetsByWorkoutWithExerciseSelection, updateExerciseNote, updateExerciseOrder, updateSet, updateSetOrder, updateWorkoutSentiment, selectExercises } from "../db/queries";
+import { completeWorkout, deleteExercise, deleteSet, insertExercise, insertExerciseSelections, insertPersonalRecord, insertSet, insertWorkout, selectExercisesWithSelection, selectPRsForUserAndExerciseSelection, selectSetsByWorkoutWithExerciseSelection, updateExerciseNote, updateExerciseOrder, updateSet, updateSetOrder, updateWorkoutSentiment, selectExercises, deleteWorkout, selectExerciseSelections } from "../db/queries";
 import type { WorkoutTemplate } from "~/app/workout/create/page";
 import type { DBExercise, DBSet, NewExercise, NewExerciseSelection, NewSet, Sentiment } from "../db/schema";
 
@@ -23,6 +23,47 @@ export async function createWorkout(workout: WorkoutTemplate) {
 
   if (!newWorkout) {
     throw new Error("Failed to create new workout");
+  }
+
+  if (workout.exercises && workout.exercises.length > 0) {
+    const allExerciseSelections = await selectExerciseSelections();
+    
+    const selectionMap = new Map(
+      allExerciseSelections.map(es => [es.name.toLowerCase(), es])
+    );
+
+    for (let exerciseOrder = 0; exerciseOrder < workout.exercises.length; exerciseOrder++) {
+      const templateExercise = workout.exercises[exerciseOrder];
+      if (!templateExercise) continue;
+      
+      const exerciseSelection = selectionMap.get(templateExercise.exerciseSelectionName.toLowerCase());
+      
+      if (!exerciseSelection) {
+        console.warn(`Exercise selection not found: ${templateExercise.exerciseSelectionName}`);
+        continue;
+      }
+
+      const newExercise: NewExercise = {
+        order: exerciseOrder,
+        workoutId: newWorkout.id,
+        exerciseSelectionId: exerciseSelection.id,
+      };
+      
+      const createdExercise = await insertExercise(newExercise);
+      
+      if (!createdExercise) {
+        console.warn(`Failed to create exercise: ${templateExercise.exerciseSelectionName}`);
+        continue;
+      }
+
+      for (let setOrder = 0; setOrder < templateExercise.sets; setOrder++) {
+        const newSet: NewSet = {
+          order: setOrder,
+          exerciseId: createdExercise.id,
+        };
+        await insertSet(newSet);
+      }
+    }
   }
 
   return newWorkout;
@@ -296,6 +337,34 @@ export async function updateWorkoutSentimentAction(userId: string, workoudId: st
 
   const updatedWorkout = await updateWorkoutSentiment(workoudId, sentiment);
   return updatedWorkout;
+}
+
+export async function deleteWorkoutAction(userId: string, workoutId: string) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("User must be signed in to create a new workout");
+  }
+
+  if (session.user.id !== userId) {
+    throw new Error("You cannot add sets to other peoples' workouts");
+  }
+
+  const deletedWorkout = await deleteWorkout(workoutId);
+  return deletedWorkout;
+}
+
+export async function seedAdditionalExercises() {
+  const exercises: NewExerciseSelection[] = [
+    { name: "Machine Row", category: "compound", primaryMuscleGroup: "back", secondaryMuscleGroup: "biceps" },
+    { name: "Dumbbell Shrugs", category: "isolation", primaryMuscleGroup: "back", secondaryMuscleGroup: null },
+    { name: "Lat Prayer", category: "isolation", primaryMuscleGroup: "back", secondaryMuscleGroup: null },
+  ];
+
+  const insertedExercises = await insertExerciseSelections(exercises);
+  return insertedExercises;
 }
 
 export async function seedExerciseSelections() {

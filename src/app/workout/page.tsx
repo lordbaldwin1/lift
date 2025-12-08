@@ -16,6 +16,8 @@ import {
   selectSetsPerMuscleGroupThisWeek,
   selectAvgSetsPerMuscleGroupPerWeek,
 } from "~/server/db/queries";
+import { Trash } from "lucide-react";
+import WorkoutHistoryCard from "~/components/workout-history-card";
 
 function StatCard({
   title,
@@ -115,9 +117,9 @@ export default async function WorkoutPage() {
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="mb-8 flex justify-center">
-        <Link href="/workout/create">
-          <Button size="default" className="text-md px-8 py-6">
+      <div className="mb-8 w-full rounded-md">
+        <Link href="/workout/create" className="block w-full">
+          <Button size="default" className="w-full">
             Start new workout
           </Button>
         </Link>
@@ -170,49 +172,7 @@ export default async function WorkoutPage() {
         </CardContent>
       </Card>
 
-      <Card className="py-4">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            Workout history
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {workouts.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">
-              Your workout history will appear here.
-            </p>
-          ) : (
-            <ScrollArea className="h-[300px]">
-              <div className="space-y-2 pr-4">
-                {workouts
-                  .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-                  .map((workout) => (
-                    <Link
-                      href={`/workout/${workout.id}`}
-                      key={workout.id}
-                      className="flex justify-between items-center p-3 rounded-lg border hover:bg-accent transition-colors"
-                    >
-                      <span className="font-medium">{workout.title}</span>
-                      <span className="text-sm text-muted-foreground">
-                        {workout.completedAt
-                          ? workout.completedAt.toLocaleDateString("en-US", {
-                              weekday: "short",
-                              month: "short",
-                              day: "numeric",
-                            })
-                          : workout.createdAt.toLocaleDateString("en-US", {
-                              weekday: "short",
-                              month: "short",
-                              day: "numeric",
-                            })}
-                      </span>
-                    </Link>
-                  ))}
-              </div>
-            </ScrollArea>
-          )}
-        </CardContent>
-      </Card>
+      <WorkoutHistoryCard workouts={workouts} userId={session.user.id} />
     </main>
   );
 }

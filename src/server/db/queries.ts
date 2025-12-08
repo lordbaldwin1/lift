@@ -348,7 +348,7 @@ export async function selectWorkoutStats(userId: string) {
   const startOfWeek = new Date(now);
   startOfWeek.setDate(now.getDate() - now.getDay());
   startOfWeek.setHours(0, 0, 0, 0);
-  
+
   const startOfYear = new Date(now.getFullYear(), 0, 1);
 
   const allWorkouts = await db
@@ -372,7 +372,7 @@ export async function selectWorkoutStats(userId: string) {
       .select({ completedAt: min(workout.completedAt) })
       .from(workout)
       .where(and(eq(workout.userId, userId), eq(workout.completed, true)));
-    
+
     const firstDate = firstWorkout[0]?.completedAt;
     if (firstDate) {
       const weeksSinceFirst = Math.max(
@@ -498,7 +498,6 @@ export async function selectTotalSetsThisWeek(userId: string) {
 export async function selectAvgTotalSetsPerWeek(userId: string) {
   const now = new Date();
 
-  // Get first completed workout date
   const firstWorkout = await db
     .select({ completedAt: min(workout.completedAt) })
     .from(workout)
@@ -514,7 +513,6 @@ export async function selectAvgTotalSetsPerWeek(userId: string) {
     Math.ceil((now.getTime() - firstDate.getTime()) / (7 * 24 * 60 * 60 * 1000))
   );
 
-  // Get total sets count
   const [result] = await db
     .select({
       totalSets: count(set.id),
@@ -526,4 +524,9 @@ export async function selectAvgTotalSetsPerWeek(userId: string) {
 
   const totalSets = Number(result?.totalSets ?? 0);
   return Math.round((totalSets / weeksSinceFirst) * 10) / 10;
+}
+
+export async function deleteWorkout(workoutId: string) {
+  const [row] = await db.delete(workout).where(eq(workout.id, workoutId)).returning();
+  return row;
 }
