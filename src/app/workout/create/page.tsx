@@ -7,8 +7,64 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
+import { Dialog, DialogContent, DialogTitle } from "~/components/ui/dialog";
 import { createWorkout } from "~/server/actions/workout-actions";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+import { useState } from "react";
+
+export default function WorkoutCreatePage() {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+
+  async function handleSelectTemplate(template: WorkoutTemplate) {
+    setIsLoading(true);
+    try {
+      const newWorkout = await createWorkout(template);
+      router.push(`/workout/${newWorkout.id}`);
+    } catch (err) {
+      toast.error(`${(err as Error).message}`);
+      return;
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  return (
+    <main className="mt-8 flex flex-col items-center space-y-6 animate-[fade-in-up_0.3s_ease-out_forwards]
+         [@keyframes_fade-in-up:{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:translateY(0)}}]">
+      <div className="text-center space-y-2">
+        <h1 className="text-2xl">Choose a template</h1>
+        <p className="text-muted-foreground text-sm">
+          Select a workout template to get started
+        </p>
+      </div>
+
+      <div className="flex w-full flex-col gap-4">
+        {templates.map((template) => (
+          <Card
+            key={template.title}
+            className="hover:border-primary cursor-pointer transition-colors"
+            onClick={() => handleSelectTemplate(template)}
+          >
+            <CardHeader>
+              <CardTitle>{template.title}</CardTitle>
+              <CardDescription>{template.description}</CardDescription>
+            </CardHeader>
+          </Card>
+        ))}
+      </div>
+
+      <Dialog open={isLoading}>
+        <DialogContent showCloseButton={false} className="flex flex-col items-center gap-4 sm:max-w-xs">
+          <DialogTitle className="sr-only">Creating Workout</DialogTitle>
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-lg font-medium">Creating Workout...</p>
+        </DialogContent>
+      </Dialog>
+    </main>
+  );
+}
 
 export type WorkoutTemplate = {
   title: string;
@@ -64,43 +120,3 @@ const templates: WorkoutTemplate[] = [
     ],
   },
 ];
-
-export default function WorkoutCreatePage() {
-  const router = useRouter();
-
-  async function handleSelectTemplate(template: WorkoutTemplate) {
-    try {
-      const newWorkout = await createWorkout(template);
-      router.push(`/workout/${newWorkout.id}`);
-    } catch(err) {
-      toast.error(`${(err as Error).message}`);
-      return;
-    }
-  }
-
-  return (
-    <main className="mt-8 flex flex-col items-center space-y-6">
-      <div className="text-center space-y-2">
-        <h1 className="text-2xl">Choose a template</h1>
-        <p className="text-muted-foreground text-sm">
-          Select a workout template to get started
-        </p>
-      </div>
-
-      <div className="flex w-full flex-col gap-4">
-        {templates.map((template) => (
-          <Card
-            key={template.title}
-            className="hover:border-primary transition-colors cursor-pointer"
-            onClick={() => handleSelectTemplate(template)}
-          >
-            <CardHeader>
-              <CardTitle>{template.title}</CardTitle>
-              <CardDescription>{template.description}</CardDescription>
-            </CardHeader>
-          </Card>
-        ))}
-      </div>
-    </main>
-  );
-}

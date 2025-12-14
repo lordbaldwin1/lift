@@ -8,7 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { ScrollArea } from "~/components/ui/scroll-area";
 import { auth } from "~/server/auth/auth";
 import {
   selectWorkouts,
@@ -16,82 +15,8 @@ import {
   selectSetsPerMuscleGroupThisWeek,
   selectAvgSetsPerMuscleGroupPerWeek,
 } from "~/server/db/queries";
-import { Trash } from "lucide-react";
 import WorkoutHistoryCard from "~/components/workout-history-card";
-
-function StatCard({
-  title,
-  value,
-  subtitle,
-}: {
-  title: string;
-  value: string | number;
-  subtitle?: string;
-}) {
-  return (
-    <Card className="py-4">
-      <CardHeader>
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="text-3xl font-bold tracking-tight">{value}</div>
-        {subtitle && (
-          <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function MuscleGroupCard({
-  title,
-  data,
-  valueLabel,
-}: {
-  title: string;
-  data: { muscleGroup: string; value: number }[];
-  valueLabel: string;
-}) {
-  const total = data.reduce((sum, item) => sum + item.value, 0);
-  const displayTotal = Number.isInteger(total) ? total : Math.round(total * 10) / 10;
-
-  return (
-    <Card className="py-4">
-      <CardHeader>
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {data.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No data yet</p>
-        ) : (
-          <div className="space-y-2">
-            {data.map((item) => (
-              <div
-                key={item.muscleGroup}
-                className="flex justify-between items-center text-sm"
-              >
-                <span className="capitalize">{item.muscleGroup}</span>
-                <span className="font-semibold">
-                  {item.value} {valueLabel}
-                </span>
-              </div>
-            ))}
-            <div className="flex justify-between items-center text-sm pt-2 border-t">
-              <span className="font-semibold">Total</span>
-              <span className="font-semibold">
-                {displayTotal} {valueLabel}
-              </span>
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
+import { redirect } from "next/navigation";
 
 export default async function WorkoutPage() {
   const session = await auth.api.getSession({
@@ -99,13 +24,7 @@ export default async function WorkoutPage() {
   });
 
   if (!session) {
-    return (
-      <div className="flex h-[60vw] items-center justify-center">
-        <Button variant={"link"} className="text-md">
-          <Link href={"/login"}>Sign in to view your workouts.</Link>
-        </Button>
-      </div>
-    );
+    redirect("/login");
   }
 
   const [workouts, stats, setsThisWeek, avgSetsPerWeek] = await Promise.all([
@@ -116,7 +35,8 @@ export default async function WorkoutPage() {
   ]);
 
   return (
-    <main className="container mx-auto px-4 py-8 max-w-6xl">
+    <main className="container mx-auto px-4 py-8 max-w-6xl animate-[fade-in-up_0.3s_ease-out_forwards]
+         [@keyframes_fade-in-up:{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:translateY(0)}}]">
       <div className="mb-8 w-full rounded-md">
         <Link href="/workout/create" className="block w-full">
           <Button size="default" className="w-full">
@@ -161,8 +81,8 @@ export default async function WorkoutPage() {
         />
       </div>
 
-      <Card className="py-4 mb-6">
-        <CardHeader className="pb-2">
+      <Card className="mb-6">
+        <CardHeader>
           <CardTitle className="text-sm font-medium text-muted-foreground">
             Activity calendar
           </CardTitle>
@@ -174,5 +94,79 @@ export default async function WorkoutPage() {
 
       <WorkoutHistoryCard workouts={workouts} userId={session.user.id} />
     </main>
+  );
+}
+
+function StatCard({
+  title,
+  value,
+  subtitle,
+}: {
+  title: string;
+  value: string | number;
+  subtitle?: string;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm font-medium text-muted-foreground">
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="text-3xl font-bold tracking-tight">{value}</div>
+        {subtitle && (
+          <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function MuscleGroupCard({
+  title,
+  data,
+  valueLabel,
+}: {
+  title: string;
+  data: { muscleGroup: string; value: number }[];
+  valueLabel: string;
+}) {
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+  const displayTotal = Number.isInteger(total) ? total : Math.round(total * 10) / 10;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm font-medium text-muted-foreground">
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {data.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No data yet</p>
+        ) : (
+          <div className="space-y-2">
+            {data.map((item) => (
+              <div
+                key={item.muscleGroup}
+                className="flex justify-between items-center text-sm"
+              >
+                <span className="capitalize">{item.muscleGroup}</span>
+                <span className="font-semibold">
+                  {item.value} {valueLabel}
+                </span>
+              </div>
+            ))}
+            <div className="flex justify-between items-center text-sm pt-2 border-t">
+              <span className="font-semibold">Total</span>
+              <span className="font-semibold">
+                {displayTotal} {valueLabel}
+              </span>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

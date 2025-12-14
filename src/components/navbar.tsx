@@ -28,11 +28,11 @@ export default function Navbar() {
   }
 
   return (
-    <section className="flex flex-row items-center justify-between bg-transparent">
+    <section className="flex flex-row items-center justify-between bg-transparent p-1">
       <div className="space-x-8 flex flex-row items-end">
-        <Link href={"/"} className="text-xl flex flex-row">
-          <h1 className="font-bold text-3xl md:block lg:block">lift</h1>
-          <h1 className="font-bold text-3xl md:block lg:block text-primary/90">weight</h1>
+        <Link href={"/"} className="flex flex-row items-center group">
+          <h1 className="font-bold text-3xl md:block lg:block text-foreground group-hover:text-primary/90 duration-200">lift</h1>
+          <h1 className="font-bold text-3xl md:block lg:block text-primary/90 group-hover:text-foreground duration-200">things</h1>
         </Link>
         <Link href={"/workout"} className="hover:text-muted-foreground duration-200 text-md font-semibold">
           Workouts
