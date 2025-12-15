@@ -88,7 +88,7 @@ export default function WorkoutHistoryCard({
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader>
-                          <DialogTitle>Delete workout?</DialogTitle>
+                          <DialogTitle>Are you sure?</DialogTitle>
                           <DialogDescription>
                             This action cannot be undone. This will permanently delete &quot;{workout.title}&quot; and all associated data.
                           </DialogDescription>
