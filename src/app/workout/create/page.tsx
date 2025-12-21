@@ -7,11 +7,15 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { Dialog, DialogContent, DialogTitle } from "~/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "~/components/ui/dialog";
 import { createWorkout } from "~/server/actions/workout-actions";
+import { generateWorkoutTemplateAction, type GenerationQuestions } from "~/server/actions/liftex";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
+import { Button } from "~/components/ui/button";
+import { Label } from "~/components/ui/label";
+import { cn } from "~/lib/utils";
 
 export default function WorkoutCreatePage() {
   const router = useRouter();
@@ -40,6 +44,8 @@ export default function WorkoutCreatePage() {
         </p>
       </div>
 
+      <GenerateAIWorkoutDialog onSelectTemplate={handleSelectTemplate} />
+
       <div className="flex w-full flex-col gap-4">
         {templates.map((template) => (
           <Card
@@ -63,6 +69,148 @@ export default function WorkoutCreatePage() {
         </DialogContent>
       </Dialog>
     </main>
+  );
+}
+
+type QuestionConfig = {
+  id: keyof GenerationQuestions;
+  question: string;
+  options: { value: string; label: string }[];
+};
+
+const questions: QuestionConfig[] = [
+  {
+    id: "experience",
+    question: "Are you a beginner?",
+    options: [
+      { value: "beginner", label: "Yes" },
+      { value: "experienced", label: "No" },
+    ],
+  },
+  {
+    id: "split",
+    question: "What type of split do you prefer?",
+    options: [
+      { value: "ppl", label: "Push Pull Legs" },
+      { value: "upper_lower", label: "Upper/Lower" },
+      { value: "full_body", label: "Full Body" },
+    ],
+  },
+  {
+    id: "volume",
+    question: "Do you like low or high volume?",
+    options: [
+      { value: "low", label: "Low" },
+      { value: "medium", label: "Medium" },
+      { value: "high", label: "High" },
+    ],
+  },
+  {
+    id: "frequency",
+    question: "How often do you hit each muscle group each week?",
+    options: [
+      { value: "once_a_week", label: "1x Weekly" },
+      { value: "twice_a_week", label: "2x Weekly" },
+    ],
+  },
+];
+
+type QuizAnswers = GenerationQuestions;
+
+type SegmentedButtonGroupProps = {
+  options: { value: string; label: string }[];
+  selectedValue: string | undefined;
+  onSelectedValueChange: (value: string) => void;
+};
+
+function SegmentedButtonGroup({ options, selectedValue, onSelectedValueChange }: SegmentedButtonGroupProps) {
+  return (
+    <div className="flex flex-row">
+      {options.map((option, idx) => {
+        const isFirst = idx === 0;
+        const isLast = idx === options.length - 1;
+        const isSelected = selectedValue === option.value;
+
+        return (
+          <Button
+            key={option.value}
+            type="button"
+            variant={isSelected ? "default" : "outline"}
+            className={cn(
+              "flex-1 rounded-none",
+              isFirst && "rounded-l-md",
+              isLast && "rounded-r-md"
+            )}
+            onClick={() => onSelectedValueChange(option.value)}
+          >
+            {option.label}
+          </Button>
+        );
+      })}
+    </div>
+  );
+}
+
+type GenerateAIWorkoutDialogProps = {
+  onSelectTemplate: (template: WorkoutTemplate) => Promise<void>;
+};
+
+function GenerateAIWorkoutDialog({ onSelectTemplate }: GenerateAIWorkoutDialogProps) {
+  const [answers, setAnswers] = useState<QuizAnswers>({
+    experience: "experienced",
+    split: "ppl",
+    volume: "low",
+    frequency: "twice_a_week"
+  });
+
+  const handleSelect = (questionId: string, value: string) => {
+    setAnswers((prev) => ({ ...prev, [questionId]: value }));
+  };
+
+  const isComplete = Object.keys(answers).length === questions.length;
+
+  const handleGenerate = async () => {
+    // TODO: Call AI generation logic with answer
+    console.log("Generating workout with answers:", answers);
+    
+    const generatedTemplate = await generateWorkoutTemplateAction(answers);
+    await onSelectTemplate(generatedTemplate);
+  };
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button>*New* Generate a workout</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Generate a workout</DialogTitle>
+          <DialogDescription>
+            Based on your previous exercise volume and performance (if
+            applicable), we will generate an optimal workout for you.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col w-full space-y-4">
+          {questions.map((q) => (
+            <div key={q.id} className="space-y-2">
+              <Label>{q.question}</Label>
+              <SegmentedButtonGroup
+                options={q.options}
+                selectedValue={answers[q.id]}
+                onSelectedValueChange={(value) => handleSelect(q.id, value)}
+              />
+            </div>
+          ))}
+          <Button
+            disabled={!isComplete}
+            onClick={handleGenerate}
+            className="mt-2"
+          >
+            Generate Workout
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

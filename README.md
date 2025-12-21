@@ -44,7 +44,7 @@ my personal hypertrophy training app
 Options for user to select:
 - Are you a beginner? Y/N
 - What type of split are you on? (Or prefer) Upper/Lower, Push Pull Legs, Full body
-- Would you like to prioritize any muscle group? No, list muscle groups
+- Do you prefer high or low volume?
 
 When not to take previous workouts into account:
 - if user is a beginner, don't take previous workouts into account
@@ -58,9 +58,6 @@ Taking previous workout data into account:
 - muscle group volume > 20 sets, strength decrease -> lower volume, but stay above 10 sets
 - muscle group volume < 10 sets, strength decrease -> higher volume, but stay below 20 sets
 - strength increase -> same volume
-
-Calculating strength up/down per muscle group:
-
 
 ### adding PR table and checking upon workout completion
 - userId, workoutId, exerciseSelectionId, weight, reps

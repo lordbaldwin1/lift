@@ -7,7 +7,14 @@ import { auth } from "../auth/auth";
 import { headers } from "next/headers";
 import { selectExerciseSelectionNames } from "../db/queries";
 
-export async function getRecommendedWorkoutAction(workoutDescription: string) {
+export type GenerationQuestions = {
+  experience: "beginner" | "experienced";
+  split: "ppl" | "upper_lower" | "full_body";
+  volume: "low" | "medium" | "high";
+  frequency: "once_a_week" | "twice_a_week";
+};
+
+export async function generateWorkoutTemplateAction(generationQuestions: GenerationQuestions) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -27,9 +34,14 @@ export async function getRecommendedWorkoutAction(workoutDescription: string) {
 
   const exerciseNames = exercises.map(ex => ex.name).join(", ");
 
-  const prompt = `Workout description: ${workoutDescription}\n\nAvailable exercises: ${exerciseNames}\n\nPlease use only these exercises when generating the workout.`;
+  const prompt = `
+  ${generationQuestions}\n\n
+  
+  Available exercises: ${exerciseNames}\n\n
+  
+  Please use only these exercises when generating the workout.`;
 
-  let { generatedWorkout } = await generateRecommendedWorkout(prompt);
+  let { generatedWorkout } = await generateWorkout(prompt);
 
   const exerciseNamesSet = new Set(exercises.map(ex => ex.name));
 
@@ -61,13 +73,13 @@ export async function getRecommendedWorkoutAction(workoutDescription: string) {
 
       Please fix only the invalid exercise names by replacing them with similar exercises from the available list. Keep the rest of the workout the same.`;
 
-    ({ generatedWorkout } = await generateRecommendedWorkout(correctionPrompt));
+    ({ generatedWorkout } = await generateWorkout(correctionPrompt));
   }
 
   return generatedWorkout;
 }
 
-export async function generateRecommendedWorkout(input: string) {
+export async function generateWorkout(input: string) {
   const { object: generatedWorkout } = await generateObject({
     model: "google/gemini-2.5-flash-lite-preview-09-2025",
     system: "Generate a hypertrophy workout for the given prompt. Please use only the exercises listed in the Available exercises given.",
