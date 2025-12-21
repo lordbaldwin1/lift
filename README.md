@@ -26,14 +26,41 @@ my personal hypertrophy training app
 - [x] fix complete workout functionality after react query refactor
 - [x] add ExerciseSelection table, add reference in exercises table
 - [x] make new set button be disabled while adding exercise
-- [ ] add PR table (see below)
-- [ ] add check upon workout completion to see if PR was hit
-- [ ] add workout breakdown to workout complete page
-- [ ] create workouts page (see below)
-- [ ] add better templates for push pull legs with my current workouts
+- [x] add PR table (see below)
+- [x] add check upon workout completion to see if PR was hit
+- [x] add workout breakdown to workout complete page
+- [x] create workouts page (see below)
+- [x] add better templates for push pull legs with my current workouts
+- [x] setup AI SDK gateway
+- [x] add workout object generation
+- [x] add workout object validation (checking that exercises do exist)
+- [ ] add past 4 weeks of workout volume and performance to prompt (see below)
+- [ ] complete AI workout generation
 - [ ] figure out what to test and how to test
 - [ ] add GitHub actions CI
 - [ ] how do I want to deploy this? VPS or AWS/GCP or to railway via docker containers & github actions? 
+
+### adding last month of workout data to AI workout generation prompt
+Options for user to select:
+- Are you a beginner? Y/N
+- What type of split are you on? (Or prefer) Upper/Lower, Push Pull Legs, Full body
+- Would you like to prioritize any muscle group? No, list muscle groups
+
+When not to take previous workouts into account:
+- if user is a beginner, don't take previous workouts into account
+- if user averages less than 3 workouts per week, don't take previous workouts into account
+- if user has not repeated any exercises over last month, don't take previous workouts into account
+- above cases: generate workout so that if user were to do it 2x a week, their volume would fall under the 10-20 sets per muscle group per week range.
+
+Taking previous workout data into account:
+- otherwise, calc strength up/down for muscle groups over last month (if possible)
+- calc set volume per muscle group per week
+- muscle group volume > 20 sets, strength decrease -> lower volume, but stay above 10 sets
+- muscle group volume < 10 sets, strength decrease -> higher volume, but stay below 20 sets
+- strength increase -> same volume
+
+Calculating strength up/down per muscle group:
+
 
 ### adding PR table and checking upon workout completion
 - userId, workoutId, exerciseSelectionId, weight, reps

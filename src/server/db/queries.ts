@@ -255,6 +255,11 @@ export async function selectExerciseSelections() {
   return rows;
 }
 
+export async function selectExerciseSelectionNames() {
+  const rows = await db.select({ name: exerciseSelection.name }).from(exerciseSelection);
+  return rows;
+}
+
 export async function selectExerciseSelectionById(exerciseSelectionId: string) {
   const [row] = await db
     .select()

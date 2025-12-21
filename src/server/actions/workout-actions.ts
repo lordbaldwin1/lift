@@ -250,12 +250,10 @@ export async function completeWorkoutAction(userId: string, workoutId: string, w
     throw new Error("You cannot complete other peoples' workouts");
   }
 
-  // Get all sets with exercise selection info
   const setsWithSelection = await selectSetsByWorkoutWithExerciseSelection(workoutId);
   const exercisesWithSelection = await selectExercisesWithSelection(workoutId);
 
-  // Find top set (highest weight) for each exercise
-  // If multiple sets share highest weight, use the one with most reps
+  // Find top set (highest weight + reps) for each exercise
   type TopSet = {
     setId: string;
     exerciseSelectionId: string;
@@ -281,7 +279,6 @@ export async function completeWorkoutAction(userId: string, workoutId: string, w
         reps: set.reps,
       };
     } else {
-      // Compare: prefer higher weight, or if same weight, higher reps
       if (set.weight > current.weight || 
           (set.weight === current.weight && set.reps > current.reps)) {
         topSetsByExercise[exerciseId] = {
