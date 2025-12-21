@@ -94,7 +94,7 @@ export default function WorkoutButtonGroup({
   const isAddingExercise = addExerciseMutation.isPending;
 
   return (
-    <div className="flex flex-col items-center space-y-2">
+    <div className="flex flex-col items-center space-y-2 mb-12">
       <Dialog>
         <DialogTrigger asChild>
           <Button className="w-1/2" disabled={workout.completed}>

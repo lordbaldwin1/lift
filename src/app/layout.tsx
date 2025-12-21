@@ -25,8 +25,8 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${inter.variable}`} suppressHydrationWarning>
-      <body>
-        <div className="mx-auto max-w-4xl px-4 py-8">
+      <body className="min-h-screen flex flex-col">
+        <div className="mx-auto w-full max-w-4xl px-4 py-8 flex flex-col flex-1">
           <QueryProvider>
             <ThemeProvider
               attribute="class"
@@ -35,7 +35,10 @@ export default function RootLayout({
               disableTransitionOnChange
             >
               <Navbar />
-              {children}
+              <main className="flex-1 flex flex-col">
+                {children}
+              </main>
+              <Footer />
               <Toaster position="top-center" />
             </ThemeProvider>
           </QueryProvider>

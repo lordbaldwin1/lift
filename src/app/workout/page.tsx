@@ -17,6 +17,7 @@ import {
 } from "~/server/db/queries";
 import WorkoutHistoryCard from "~/components/workout-history-card";
 import { redirect } from "next/navigation";
+import CreateWorkoutButton from "~/components/workout/create-workout-button";
 
 export default async function WorkoutPage() {
   const session = await auth.api.getSession({
@@ -38,11 +39,7 @@ export default async function WorkoutPage() {
     <main className="container mx-auto px-4 py-8 max-w-6xl animate-[fade-in-up_0.3s_ease-out_forwards]
          [@keyframes_fade-in-up:{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:translateY(0)}}]">
       <div className="mb-8 w-full rounded-md">
-        <Link href="/workout/create" className="block w-full">
-          <Button size="default" className="w-full">
-            Start new workout
-          </Button>
-        </Link>
+        <CreateWorkoutButton />
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -93,6 +90,7 @@ export default async function WorkoutPage() {
       </Card>
 
       <WorkoutHistoryCard workouts={workouts} userId={session.user.id} />
+      <CreateWorkoutButton className="mt-8" />
     </main>
   );
 }

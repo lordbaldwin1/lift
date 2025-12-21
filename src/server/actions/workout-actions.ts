@@ -265,7 +265,6 @@ export async function completeWorkoutAction(userId: string, workoutId: string, w
   const topSetsByExercise: Record<string, TopSet> = {};
 
   for (const set of setsWithSelection) {
-    // Skip sets without weight or reps
     if (set.weight === null || set.reps === null) continue;
 
     const exercise = exercisesWithSelection.find(ex => ex.id === set.exerciseId);
@@ -299,7 +298,6 @@ export async function completeWorkoutAction(userId: string, workoutId: string, w
   for (const topSet of Object.values(topSetsByExercise)) {
     const existingPRs = await selectPRsForUserAndExerciseSelection(userId, topSet.exerciseSelectionId);
     
-    // Find if there's an existing PR at this exact weight
     const prAtSameWeight = existingPRs.find(pr => pr.weight === topSet.weight);
 
     // PR qualifies if:

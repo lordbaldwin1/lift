@@ -2,7 +2,7 @@ import { Cat, Code, Mail } from "lucide-react";
 
 export default function Footer() {
   return (
-    <footer className="bg-background/50 backdrop-blur-sm transition-opacity duration-300">
+    <footer className="bg-background backdrop-blur-sm transition-opacity duration-300">
       <div className="mx-auto max-w-4xl px-4">
         <div className="flex justify-center gap-6">
           <a
