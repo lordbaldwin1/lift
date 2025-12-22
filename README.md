@@ -34,8 +34,8 @@ my personal hypertrophy training app
 - [x] setup AI SDK gateway
 - [x] add workout object generation
 - [x] add workout object validation (checking that exercises do exist)
-- [ ] add past 4 weeks of workout volume and performance to prompt (see below)
-- [ ] complete AI workout generation
+- [x] add past 4 weeks of workout volume and performance to prompt (see below)
+- [x] complete AI workout generation
 - [ ] figure out what to test and how to test
 - [ ] add GitHub actions CI
 - [ ] how do I want to deploy this? VPS or AWS/GCP or to railway via docker containers & github actions? 
