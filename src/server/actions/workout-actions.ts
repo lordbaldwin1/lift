@@ -2,9 +2,9 @@
 
 import { headers } from "next/headers";
 import { auth } from "../auth/auth";
-import { completeWorkout, deleteExercise, deleteSet, insertExercise, insertExerciseSelections, insertPersonalRecord, insertSet, insertWorkout, selectExercisesWithSelection, selectPRsForUserAndExerciseSelection, selectSetsByWorkoutWithExerciseSelection, updateExerciseNote, updateExerciseOrder, updateSet, updateSetOrder, updateWorkoutSentiment, selectExercises, deleteWorkout, selectExerciseSelections } from "../db/queries";
+import { completeWorkout, deleteExercise, deleteSet, insertExercise, insertPersonalRecord, insertSet, insertWorkout, selectExercisesWithSelection, selectPRsForUserAndExerciseSelection, selectSetsByWorkoutWithExerciseSelection, updateExerciseNote, updateExerciseOrder, updateSet, updateSetOrder, updateWorkoutSentiment, selectExercises, deleteWorkout, selectExerciseSelections } from "../db/queries";
 import type { WorkoutTemplate } from "~/app/workout/create/page";
-import type { DBExercise, DBSet, NewExercise, NewExerciseSelection, NewSet, Sentiment } from "../db/schema";
+import type { DBExercise, DBSet, NewExercise, NewSet, Sentiment } from "../db/schema";
 
 export async function createWorkout(workout: WorkoutTemplate) {
   const session = await auth.api.getSession({
@@ -349,109 +349,4 @@ export async function deleteWorkoutAction(userId: string, workoutId: string) {
 
   const deletedWorkout = await deleteWorkout(workoutId);
   return deletedWorkout;
-}
-
-export async function seedAdditionalExercises() {
-  const exercises: NewExerciseSelection[] = [
-    { name: "Machine Row", category: "compound", primaryMuscleGroup: "back", secondaryMuscleGroup: "biceps" },
-    { name: "Dumbbell Shrugs", category: "isolation", primaryMuscleGroup: "back", secondaryMuscleGroup: null },
-    { name: "Lat Prayer", category: "isolation", primaryMuscleGroup: "back", secondaryMuscleGroup: null },
-  ];
-
-  const insertedExercises = await insertExerciseSelections(exercises);
-  return insertedExercises;
-}
-
-export async function seedExerciseSelections() {
-  const exercises: NewExerciseSelection[] = [
-    // Chest - Barbell
-    { name: "Barbell Bench Press", category: "compound", primaryMuscleGroup: "chest", secondaryMuscleGroup: "triceps" },
-    { name: "Incline Barbell Bench Press", category: "compound", primaryMuscleGroup: "chest", secondaryMuscleGroup: "shoulders" },
-    { name: "Decline Barbell Bench Press", category: "compound", primaryMuscleGroup: "chest", secondaryMuscleGroup: "triceps" },
-    
-    // Chest - Dumbbell
-    { name: "Dumbbell Bench Press", category: "compound", primaryMuscleGroup: "chest", secondaryMuscleGroup: "triceps" },
-    { name: "Incline Dumbbell Bench Press", category: "compound", primaryMuscleGroup: "chest", secondaryMuscleGroup: "shoulders" },
-    { name: "Decline Dumbbell Bench Press", category: "compound", primaryMuscleGroup: "chest", secondaryMuscleGroup: "triceps" },
-    { name: "Dumbbell Fly", category: "isolation", primaryMuscleGroup: "chest", secondaryMuscleGroup: null },
-    { name: "Incline Dumbbell Fly", category: "isolation", primaryMuscleGroup: "chest", secondaryMuscleGroup: null },
-    
-    // Chest - Machine/Cable
-    { name: "Cable Fly", category: "isolation", primaryMuscleGroup: "chest", secondaryMuscleGroup: null },
-    { name: "Chest Press Machine", category: "compound", primaryMuscleGroup: "chest", secondaryMuscleGroup: "triceps" },
-    { name: "Pec Deck", category: "isolation", primaryMuscleGroup: "chest", secondaryMuscleGroup: null },
-    { name: "Push-Ups", category: "compound", primaryMuscleGroup: "chest", secondaryMuscleGroup: "triceps" },
-    
-    // Back - Barbell
-    { name: "Barbell Row", category: "compound", primaryMuscleGroup: "back", secondaryMuscleGroup: "biceps" },
-    { name: "Deadlift", category: "compound", primaryMuscleGroup: "back", secondaryMuscleGroup: "legs" },
-    { name: "Pendlay Row", category: "compound", primaryMuscleGroup: "back", secondaryMuscleGroup: "biceps" },
-    
-    // Back - Dumbbell
-    { name: "Dumbbell Row", category: "compound", primaryMuscleGroup: "back", secondaryMuscleGroup: "biceps" },
-    { name: "Single-Arm Dumbbell Row", category: "compound", primaryMuscleGroup: "back", secondaryMuscleGroup: "biceps" },
-    
-    // Back - Bodyweight/Cable
-    { name: "Pull-Up", category: "compound", primaryMuscleGroup: "back", secondaryMuscleGroup: "biceps" },
-    { name: "Chin-Up", category: "compound", primaryMuscleGroup: "back", secondaryMuscleGroup: "biceps" },
-    { name: "Lat Pulldown", category: "compound", primaryMuscleGroup: "back", secondaryMuscleGroup: "biceps" },
-    { name: "Seated Cable Row", category: "compound", primaryMuscleGroup: "back", secondaryMuscleGroup: "biceps" },
-    { name: "T-Bar Row", category: "compound", primaryMuscleGroup: "back", secondaryMuscleGroup: "biceps" },
-    { name: "Face Pull", category: "isolation", primaryMuscleGroup: "back", secondaryMuscleGroup: "shoulders" },
-    
-    // Shoulders - Barbell
-    { name: "Overhead Press", category: "compound", primaryMuscleGroup: "shoulders", secondaryMuscleGroup: "triceps" },
-    { name: "Push Press", category: "compound", primaryMuscleGroup: "shoulders", secondaryMuscleGroup: "triceps" },
-    
-    // Shoulders - Dumbbell
-    { name: "Dumbbell Shoulder Press", category: "compound", primaryMuscleGroup: "shoulders", secondaryMuscleGroup: "triceps" },
-    { name: "Arnold Press", category: "compound", primaryMuscleGroup: "shoulders", secondaryMuscleGroup: "triceps" },
-    { name: "Lateral Raise", category: "isolation", primaryMuscleGroup: "shoulders", secondaryMuscleGroup: null },
-    { name: "Front Raise", category: "isolation", primaryMuscleGroup: "shoulders", secondaryMuscleGroup: null },
-    { name: "Rear Delt Fly", category: "isolation", primaryMuscleGroup: "shoulders", secondaryMuscleGroup: null },
-    
-    // Shoulders - Machine
-    { name: "Shoulder Press Machine", category: "compound", primaryMuscleGroup: "shoulders", secondaryMuscleGroup: "triceps" },
-    { name: "Cable Lateral Raise", category: "isolation", primaryMuscleGroup: "shoulders", secondaryMuscleGroup: null },
-    
-    // Legs - Barbell
-    { name: "Barbell Squat", category: "compound", primaryMuscleGroup: "legs", secondaryMuscleGroup: "glutes" },
-    { name: "Front Squat", category: "compound", primaryMuscleGroup: "legs", secondaryMuscleGroup: "core" },
-    { name: "Romanian Deadlift", category: "compound", primaryMuscleGroup: "legs", secondaryMuscleGroup: "back" },
-    { name: "Bulgarian Split Squat", category: "compound", primaryMuscleGroup: "legs", secondaryMuscleGroup: "glutes" },
-    { name: "Barbell Lunge", category: "compound", primaryMuscleGroup: "legs", secondaryMuscleGroup: "glutes" },
-    
-    // Legs - Machine
-    { name: "Leg Press", category: "compound", primaryMuscleGroup: "legs", secondaryMuscleGroup: "glutes" },
-    { name: "Hack Squat", category: "compound", primaryMuscleGroup: "legs", secondaryMuscleGroup: "glutes" },
-    { name: "Leg Extension", category: "isolation", primaryMuscleGroup: "legs", secondaryMuscleGroup: null },
-    { name: "Leg Curl", category: "isolation", primaryMuscleGroup: "legs", secondaryMuscleGroup: null },
-    { name: "Calf Raise", category: "isolation", primaryMuscleGroup: "legs", secondaryMuscleGroup: null },
-    { name: "Seated Calf Raise", category: "isolation", primaryMuscleGroup: "legs", secondaryMuscleGroup: null },
-    
-    // Arms - Biceps
-    { name: "Barbell Curl", category: "isolation", primaryMuscleGroup: "biceps", secondaryMuscleGroup: null },
-    { name: "Dumbbell Curl", category: "isolation", primaryMuscleGroup: "biceps", secondaryMuscleGroup: null },
-    { name: "Hammer Curl", category: "isolation", primaryMuscleGroup: "biceps", secondaryMuscleGroup: "forearms" },
-    { name: "Preacher Curl", category: "isolation", primaryMuscleGroup: "biceps", secondaryMuscleGroup: null },
-    { name: "Cable Curl", category: "isolation", primaryMuscleGroup: "biceps", secondaryMuscleGroup: null },
-    { name: "Concentration Curl", category: "isolation", primaryMuscleGroup: "biceps", secondaryMuscleGroup: null },
-    
-    // Arms - Triceps
-    { name: "Close-Grip Bench Press", category: "compound", primaryMuscleGroup: "triceps", secondaryMuscleGroup: "chest" },
-    { name: "Dips", category: "compound", primaryMuscleGroup: "triceps", secondaryMuscleGroup: "chest" },
-    { name: "Tricep Pushdown", category: "isolation", primaryMuscleGroup: "triceps", secondaryMuscleGroup: null },
-    { name: "Overhead Tricep Extension", category: "isolation", primaryMuscleGroup: "triceps", secondaryMuscleGroup: null },
-    { name: "Skull Crusher", category: "isolation", primaryMuscleGroup: "triceps", secondaryMuscleGroup: null },
-    { name: "Tricep Kickback", category: "isolation", primaryMuscleGroup: "triceps", secondaryMuscleGroup: null },
-    
-    // Core
-    { name: "Plank", category: "isolation", primaryMuscleGroup: "core", secondaryMuscleGroup: null },
-    { name: "Ab Wheel Rollout", category: "compound", primaryMuscleGroup: "core", secondaryMuscleGroup: null },
-    { name: "Cable Crunch", category: "isolation", primaryMuscleGroup: "core", secondaryMuscleGroup: null },
-    { name: "Hanging Leg Raise", category: "isolation", primaryMuscleGroup: "core", secondaryMuscleGroup: null },
-  ];
-
-  const insertedExercises = await insertExerciseSelections(exercises);
-  return insertedExercises;
 }

@@ -62,10 +62,13 @@ export default function WorkoutCreatePage() {
       </div>
 
       <Dialog open={isLoading}>
-        <DialogContent showCloseButton={false} className="flex flex-col items-center gap-4 sm:max-w-xs">
+        <DialogContent showCloseButton={false} className="flex flex-col items-center gap-4 sm:max-w-xs" aria-describedby="workout loading">
           <DialogTitle className="sr-only">Creating Workout</DialogTitle>
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-lg font-medium">Creating Workout...</p>
+          <DialogDescription className="sr-only">
+            your workout will be ready soon.
+          </DialogDescription>
         </DialogContent>
       </Dialog>
     </main>
@@ -111,6 +114,15 @@ const questions: QuestionConfig[] = [
     options: [
       { value: "once_a_week", label: "1x Weekly" },
       { value: "twice_a_week", label: "2x Weekly" },
+    ],
+  },
+  {
+    id: "weightDirection",
+    question: "Are you cutting, maintaining, or bulking?",
+    options: [
+      { value: "cutting", label: "Cutting" },
+      { value: "maintaining", label: "Maintaining" },
+      { value: "bulking", label: "Bulking" },
     ],
   },
 ];
@@ -160,7 +172,8 @@ function GenerateAIWorkoutDialog({ onSelectTemplate }: GenerateAIWorkoutDialogPr
     experience: "experienced",
     split: "ppl",
     volume: "low",
-    frequency: "twice_a_week"
+    frequency: "twice_a_week",
+    weightDirection: "cutting",
   });
 
   const handleSelect = (questionId: string, value: string) => {
@@ -170,9 +183,8 @@ function GenerateAIWorkoutDialog({ onSelectTemplate }: GenerateAIWorkoutDialogPr
   const isComplete = Object.keys(answers).length === questions.length;
 
   const handleGenerate = async () => {
-    // TODO: Call AI generation logic with answer
     console.log("Generating workout with answers:", answers);
-    
+
     const generatedTemplate = await generateWorkoutTemplateAction(answers);
     await onSelectTemplate(generatedTemplate);
   };

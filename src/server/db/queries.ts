@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, sql, count, min } from "drizzle-orm";
+import { and, asc, eq, gte, sql, count, min, desc } from "drizzle-orm";
 import { db } from ".";
 import type {
   NewExercise,
@@ -273,6 +273,36 @@ export async function selectPRsForUser(userId: string) {
   return rows;
 }
 
+export async function selectPRsForUserWithExerciseSelectionLastMonth(userId: string) {
+  const oneMonthAgo = new Date();
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+  const rows = await db
+    .select({
+      id: personalRecord.id,
+      weight: personalRecord.weight,
+      reps: personalRecord.reps,
+      createdAt: personalRecord.createdAt,
+      exerciseSelection: {
+        id: exerciseSelection.id,
+        name: exerciseSelection.name,
+        primaryMuscleGroup: exerciseSelection.primaryMuscleGroup,
+      },
+    })
+    .from(personalRecord)
+    .innerJoin(
+      exerciseSelection,
+      eq(personalRecord.exerciseSelectionId, exerciseSelection.id),
+    )
+    .where(
+      and(
+        eq(personalRecord.userId, userId),
+        gte(personalRecord.createdAt, oneMonthAgo),
+      )
+    );
+  return rows;
+}
+
 export async function selectPRsForUserAndExerciseSelection(userId: string, exerciseSelectionId: string) {
   const rows = await db
     .select()
@@ -476,6 +506,43 @@ export async function selectAvgSetsPerMuscleGroupPerWeek(userId: string) {
   }));
 }
 
+export async function selectAvgSetsPerMuscleGroupPerWeekLastMonth(userId: string) {
+  const now = new Date();
+  const oneMonthAgo = new Date(now);
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+  const rows = await db
+    .select({
+      primaryMuscleGroup: exerciseSelection.primaryMuscleGroup,
+      secondaryMuscleGroup: exerciseSelection.secondaryMuscleGroup,
+    })
+    .from(set)
+    .innerJoin(exercise, eq(set.exerciseId, exercise.id))
+    .innerJoin(workout, eq(exercise.workoutId, workout.id))
+    .innerJoin(exerciseSelection, eq(exercise.exerciseSelectionId, exerciseSelection.id))
+    .where(
+      and(
+        eq(workout.userId, userId),
+        eq(workout.completed, true),
+        gte(workout.completedAt, oneMonthAgo)
+      )
+    );
+
+  const muscleGroupSets: Record<string, number> = {};
+  for (const row of rows) {
+    muscleGroupSets[row.primaryMuscleGroup] = (muscleGroupSets[row.primaryMuscleGroup] ?? 0) + 1;
+    if (row.secondaryMuscleGroup) {
+      muscleGroupSets[row.secondaryMuscleGroup] = (muscleGroupSets[row.secondaryMuscleGroup] ?? 0) + 0.5;
+    }
+  }
+
+  const weeksInMonth = 4;
+  return Object.entries(muscleGroupSets).map(([muscleGroup, totalSets]) => ({
+    muscleGroup,
+    value: Math.round((totalSets / weeksInMonth) * 10) / 10,
+  }));
+}
+
 export async function selectTotalSetsThisWeek(userId: string) {
   const now = new Date();
   const startOfWeek = new Date(now);
@@ -534,4 +601,61 @@ export async function selectAvgTotalSetsPerWeek(userId: string) {
 export async function deleteWorkout(workoutId: string) {
   const [row] = await db.delete(workout).where(eq(workout.id, workoutId)).returning();
   return row;
+}
+
+export async function selectRecentWorkoutsWithMuscleGroups(userId: string, limit: number = 2) {
+  const recentWorkouts = await db
+    .select({
+      id: workout.id,
+      title: workout.title,
+      completedAt: workout.completedAt,
+    })
+    .from(workout)
+    .where(and(eq(workout.userId, userId), eq(workout.completed, true)))
+    .orderBy(desc(workout.completedAt))
+    .limit(limit);
+
+  const workoutsWithMuscleGroups = await Promise.all(
+    recentWorkouts.map(async (w) => {
+      const muscleGroups = await db
+        .select({
+          primaryMuscleGroup: exerciseSelection.primaryMuscleGroup,
+          secondaryMuscleGroup: exerciseSelection.secondaryMuscleGroup,
+        })
+        .from(exercise)
+        .innerJoin(exerciseSelection, eq(exercise.exerciseSelectionId, exerciseSelection.id))
+        .where(eq(exercise.workoutId, w.id));
+
+      const primaryGroups = [...new Set(muscleGroups.map((mg) => mg.primaryMuscleGroup))];
+      const secondaryGroups = [...new Set(muscleGroups.map((mg) => mg.secondaryMuscleGroup).filter(Boolean))] as string[];
+
+      return {
+        ...w,
+        primaryMuscleGroups: primaryGroups,
+        secondaryMuscleGroups: secondaryGroups,
+      };
+    })
+  );
+
+  return workoutsWithMuscleGroups;
+}
+
+export async function selectUserPreviousExerciseNamesLastMonth(userId: string) {
+  const oneMonthAgo = new Date();
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+  const rows = await db
+    .selectDistinct({ name: exerciseSelection.name })
+    .from(exercise)
+    .innerJoin(workout, eq(exercise.workoutId, workout.id))
+    .innerJoin(exerciseSelection, eq(exercise.exerciseSelectionId, exerciseSelection.id))
+    .where(
+      and(
+        eq(workout.userId, userId),
+        eq(workout.completed, true),
+        gte(workout.completedAt, oneMonthAgo)
+      )
+    );
+
+  return rows.map((r) => r.name);
 }

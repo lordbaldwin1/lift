@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "~/components/ui/button";
-import { seedExerciseSelections, seedAdditionalExercises } from "~/server/actions/workout-actions";
+import { seedExerciseSelections, seedAdditionalExercises } from "~/server/actions/exercise-selection-actions";
 import { toast } from "sonner";
 
 export default function SandboxPage() {

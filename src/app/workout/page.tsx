@@ -150,7 +150,9 @@ function MuscleGroupCard({
                 key={item.muscleGroup}
                 className="flex justify-between items-center text-sm"
               >
-                <span className="capitalize">{item.muscleGroup}</span>
+                <span className="capitalize">
+                  {item.muscleGroup.replace(/_/g, " ")}
+                </span>
                 <span className="font-semibold">
                   {item.value} {valueLabel}
                 </span>
