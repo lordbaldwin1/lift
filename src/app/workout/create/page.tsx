@@ -1,25 +1,66 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Card,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "~/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "~/components/ui/dialog";
 import { createWorkout } from "~/server/actions/workout-actions";
+import { deleteWorkoutTemplateAction } from "~/server/actions/template-actions";
 import { generateWorkoutTemplateAction, type GenerationQuestions } from "~/server/actions/liftex";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { Loader2, Plus, ChevronRight, Trash, Pencil } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Button } from "~/components/ui/button";
 import { Label } from "~/components/ui/label";
 import { cn } from "~/lib/utils";
+import type { DBWorkoutTemplate } from "~/server/db/schema";
+
+type Tab = "my-templates" | "precreated";
 
 export default function WorkoutCreatePage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>("my-templates");
+  const [userTemplates, setUserTemplates] = useState<DBWorkoutTemplate[]>([]);
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(true);
+  const [deleteDialogId, setDeleteDialogId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    async function fetchUserTemplates() {
+      try {
+        const response = await fetch("/api/templates");
+        if (response.ok) {
+          const templates = (await response.json()) as DBWorkoutTemplate[];
+          setUserTemplates(templates);
+        }
+      } catch (err) {
+        console.error("Failed to fetch user templates:", err);
+      } finally {
+        setIsLoadingTemplates(false);
+      }
+    }
+    void fetchUserTemplates();
+  }, []);
+
+  async function handleDeleteTemplate(templateId: string) {
+    setIsDeleting(true);
+    try {
+      await deleteWorkoutTemplateAction(templateId);
+      setUserTemplates((prev) => prev.filter((t) => t.id !== templateId));
+      toast.success("Template deleted successfully");
+      setDeleteDialogId(null);
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setIsDeleting(false);
+    }
+  }
 
   async function handleSelectTemplate(template: WorkoutTemplate) {
     setIsLoading(true);
@@ -44,21 +85,170 @@ export default function WorkoutCreatePage() {
         </p>
       </div>
 
-      <GenerateAIWorkoutDialog onSelectTemplate={handleSelectTemplate} />
+      {/* Tab Buttons */}
+      <div className="flex w-full">
+        <Button
+          variant={activeTab === "my-templates" ? "default" : "outline"}
+          className="flex-1 rounded-none rounded-l-md"
+          onClick={() => setActiveTab("my-templates")}
+        >
+          My Templates
+        </Button>
+        <Button
+          variant={activeTab === "precreated" ? "default" : "outline"}
+          className="flex-1 rounded-none rounded-r-md"
+          onClick={() => setActiveTab("precreated")}
+        >
+          Precreated Templates
+        </Button>
+      </div>
 
+      {/* Tab Content */}
       <div className="flex w-full flex-col gap-4">
-        {templates.map((template) => (
-          <Card
-            key={template.title}
-            className="hover:border-primary cursor-pointer transition-colors"
-            onClick={() => handleSelectTemplate(template)}
-          >
-            <CardHeader>
-              <CardTitle>{template.title}</CardTitle>
-              <CardDescription>{template.description}</CardDescription>
-            </CardHeader>
-          </Card>
-        ))}
+        {activeTab === "my-templates" && (
+          <>
+            {isLoadingTemplates ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : userTemplates.length === 0 ? (
+              <div className="flex flex-col items-center gap-4 py-8 text-center">
+                <p className="text-muted-foreground">
+                  You have not created any templates
+                </p>
+                <div className="flex flex-col gap-2 w-full max-w-xs">
+                  <Button asChild>
+                    <Link href="/workout/create/custom">
+                      Create Custom Template
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setActiveTab("precreated")}
+                  >
+                    View Precreated Templates
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">
+                    {userTemplates.length} template{userTemplates.length !== 1 ? "s" : ""}
+                  </span>
+                  <Button asChild variant="outline" size="sm">
+                    <Link href="/workout/create/custom">
+                      <Plus className="mr-2 h-4 w-4" />
+                      New
+                    </Link>
+                  </Button>
+                </div>
+                <div className="divide-y divide-border/50 py-2">
+                  {userTemplates.map((template) => (
+                    <div key={template.id} className="flex items-center gap-2 py-2">
+                      <Button
+                        variant="ghost"
+                        className="flex items-center gap-3 flex-1 h-auto justify-start text-left group px-3 py-2 min-w-0"
+                        onClick={() =>
+                          handleSelectTemplate({
+                            title: template.title,
+                            description: template.description,
+                            exercises: template.exercises,
+                          })
+                        }
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate group-hover:text-primary transition-colors">
+                            {template.title}
+                          </p>
+                          <p className="text-sm text-muted-foreground truncate font-normal">
+                            {template.description || `${template.exercises.length} exercises`}
+                          </p>
+                        </div>
+                        <span className="text-xs text-muted-foreground/60 shrink-0 font-normal">
+                          {new Date(template.createdAt).toLocaleDateString()}
+                        </span>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-10 w-10 shrink-0 text-muted-foreground hover:text-foreground"
+                        asChild
+                      >
+                        <Link href={`/workout/create/custom?edit=${template.id}`}>
+                          <Pencil className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                      <Dialog
+                        open={deleteDialogId === template.id}
+                        onOpenChange={(open) => setDeleteDialogId(open ? template.id : null)}
+                      >
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Are you sure?</DialogTitle>
+                            <DialogDescription>
+                              This action cannot be undone. This will permanently delete &quot;{template.title}&quot;.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <DialogFooter>
+                            <Button variant="outline" onClick={() => setDeleteDialogId(null)}>
+                              Cancel
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              onClick={() => handleDeleteTemplate(template.id)}
+                              disabled={isDeleting}
+                              className="w-20"
+                            >
+                              {isDeleting ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                "Delete"
+                              )}
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {activeTab === "precreated" && (
+          <div className="space-y-4">
+            <GenerateAIWorkoutDialog onSelectTemplate={handleSelectTemplate} />
+
+            <div className="divide-y divide-border/50 py-2">
+              {precreatedTemplates.map((template) => (
+                <Button
+                  key={template.title}
+                  variant="ghost"
+                  className="flex items-center gap-3 py-2 w-full h-auto justify-start text-left group px-3"
+                  onClick={() => handleSelectTemplate(template)}
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate group-hover:text-primary transition-colors">
+                      {template.title}
+                    </p>
+                    <p className="text-sm text-muted-foreground truncate font-normal">
+                      {template.description}
+                    </p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <Dialog open={isLoading}>
@@ -192,7 +382,17 @@ function GenerateAIWorkoutDialog({ onSelectTemplate }: GenerateAIWorkoutDialogPr
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button>*New* Generate a workout</Button>
+        <Card className="hover:border-primary cursor-pointer transition-colors bg-gradient-to-br from-primary/5 via-transparent to-secondary/10">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full shadow-[0_0_8px_2px_oklch(0.5_0.08_42/0.4)]">AI</span>
+              Generate a workout
+            </CardTitle>
+            <CardDescription>
+              Create a personalized workout based on your training history and preferences
+            </CardDescription>
+          </CardHeader>
+        </Card>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -235,7 +435,7 @@ export type WorkoutTemplate = {
   }[];
 }
 
-const templates: WorkoutTemplate[] = [
+const precreatedTemplates: WorkoutTemplate[] = [
   {
     title: "Lordbaldwin1 push day",
     description: "My personal push day for hitting chest, shoulders, and triceps. Includes 6 sets chest, 5 sets shoulders, 3 sets triceps.",

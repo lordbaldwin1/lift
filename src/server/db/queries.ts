@@ -6,6 +6,7 @@ import type {
   NewPersonalRecord,
   NewSet,
   NewWorkout,
+  NewWorkoutTemplate,
   Sentiment,
 } from "./schema";
 import {
@@ -14,6 +15,7 @@ import {
   personalRecord,
   set,
   workout,
+  workoutTemplate,
 } from "./schema";
 
 export async function insertWorkout(newWorkout: NewWorkout) {
@@ -658,4 +660,48 @@ export async function selectUserPreviousExerciseNamesLastMonth(userId: string) {
     );
 
   return rows.map((r) => r.name);
+}
+
+export async function insertWorkoutTemplate(template: NewWorkoutTemplate) {
+  const [row] = await db.insert(workoutTemplate).values(template).returning();
+  return row;
+}
+
+export async function selectWorkoutTemplatesByUser(userId: string) {
+  const rows = await db
+    .select()
+    .from(workoutTemplate)
+    .where(eq(workoutTemplate.userId, userId))
+    .orderBy(desc(workoutTemplate.createdAt));
+  return rows;
+}
+
+export async function deleteWorkoutTemplate(templateId: string) {
+  const [row] = await db
+    .delete(workoutTemplate)
+    .where(eq(workoutTemplate.id, templateId))
+    .returning();
+  return row;
+}
+
+export async function selectWorkoutTemplateById(templateId: string) {
+  const [row] = await db
+    .select()
+    .from(workoutTemplate)
+    .where(eq(workoutTemplate.id, templateId));
+  return row;
+}
+
+export async function updateWorkoutTemplate(
+  templateId: string,
+  title: string,
+  description: string,
+  exercises: { exerciseSelectionName: string; sets: number }[]
+) {
+  const [row] = await db
+    .update(workoutTemplate)
+    .set({ title, description, exercises })
+    .where(eq(workoutTemplate.id, templateId))
+    .returning();
+  return row;
 }

@@ -6,6 +6,7 @@ import {
   uuid,
   integer,
   pgEnum,
+  json,
 } from "drizzle-orm/pg-core";
 
 const sentimentEnum = pgEnum("sentiment", ["good", "medium", "bad"]);
@@ -126,6 +127,29 @@ export const personalRecord = pgTable("personal_record", {
 
 export type NewPersonalRecord = typeof personalRecord.$inferInsert;
 export type PersonalRecord = typeof personalRecord.$inferSelect;
+
+export type TemplateExercise = {
+  exerciseSelectionName: string;
+  sets: number;
+};
+
+export const workoutTemplate = pgTable("workout_template", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  exercises: json("exercises").$type<TemplateExercise[]>().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
+export type NewWorkoutTemplate = typeof workoutTemplate.$inferInsert;
+export type DBWorkoutTemplate = typeof workoutTemplate.$inferSelect;
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),

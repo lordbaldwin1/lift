@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Trash } from "lucide-react";
+import { ChevronRight, Loader2, Trash } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
@@ -43,7 +43,7 @@ export default function WorkoutHistoryCard({
   };
 
   return (
-    <Card className="py-4">
+    <Card>
       <CardHeader>
         <CardTitle className="text-sm font-medium text-muted-foreground">
           Workout history
@@ -56,34 +56,39 @@ export default function WorkoutHistoryCard({
           </p>
         ) : (
           <ScrollArea className="h-[300px]">
-            <div className="space-y-2 pr-4">
+            <div className="divide-y divide-border/50 py-2 pr-4">
               {workouts
                 .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
                 .map((workout) => (
-                  <div key={workout.id} className="flex items-stretch w-full gap-2">
-                    <Link
-                      href={`/workout/${workout.id}`}
-                      className="flex-1 flex justify-between items-center p-3 rounded-lg border transition-colors"
+                  <div key={workout.id} className="flex items-center gap-2 py-2">
+                    <Button
+                      variant="ghost"
+                      className="flex items-center gap-3 flex-1 h-auto justify-start text-left group px-3 py-2 min-w-0"
+                      asChild
                     >
-                      <span className="font-medium">{workout.title}</span>
-                      <span className="text-sm text-muted-foreground">
-                        {workout.completedAt
-                          ? workout.completedAt.toLocaleDateString("en-US", {
-                            weekday: "short",
-                            month: "short",
-                            day: "numeric",
-                          })
-                          : workout.createdAt.toLocaleDateString("en-US", {
+                      <Link href={`/workout/${workout.id}`}>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate group-hover:text-primary transition-colors">
+                            {workout.title}
+                          </p>
+                          <p className="text-sm text-muted-foreground truncate font-normal">
+                            {workout.completed ? "Completed" : "In progress"}
+                          </p>
+                        </div>
+                        <span className="text-xs text-muted-foreground/60 shrink-0 font-normal">
+                          {(workout.completedAt ?? workout.createdAt).toLocaleDateString("en-US", {
                             weekday: "short",
                             month: "short",
                             day: "numeric",
                           })}
-                      </span>
-                    </Link>
+                        </span>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
+                      </Link>
+                    </Button>
                     <Dialog open={openDialogId === workout.id} onOpenChange={(open) => setOpenDialogId(open ? workout.id : null)}>
                       <DialogTrigger asChild>
-                        <Button variant="secondary" className="h-auto w-12">
-                          <Trash />
+                        <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+                          <Trash className="h-4 w-4" />
                         </Button>
                       </DialogTrigger>
                       <DialogContent>
@@ -104,7 +109,7 @@ export default function WorkoutHistoryCard({
                             className="w-20"
                           >
                             {isPending && deletingId === workout.id ? (
-                              <Loader2 className="animate-spin" />
+                              <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
                               "Delete"
                             )}
