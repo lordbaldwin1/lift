@@ -106,7 +106,7 @@ export default function WorkoutHistoryCard({
                             variant="destructive"
                             onClick={() => handleDelete(workout.id)}
                             disabled={isPending && deletingId === workout.id}
-                            className="w-20"
+                            className="w-full sm:w-auto"
                           >
                             {isPending && deletingId === workout.id ? (
                               <Loader2 className="h-4 w-4 animate-spin" />

@@ -85,7 +85,6 @@ export default function WorkoutCreatePage() {
         </p>
       </div>
 
-      {/* Tab Buttons */}
       <div className="flex w-full">
         <Button
           variant={activeTab === "my-templates" ? "default" : "outline"}
@@ -103,7 +102,6 @@ export default function WorkoutCreatePage() {
         </Button>
       </div>
 
-      {/* Tab Content */}
       <div className="flex w-full flex-col gap-4">
         {activeTab === "my-templates" && (
           <>
@@ -204,7 +202,7 @@ export default function WorkoutCreatePage() {
                               variant="destructive"
                               onClick={() => handleDeleteTemplate(template.id)}
                               disabled={isDeleting}
-                              className="w-20"
+                              className="w-full sm:w-auto"
                             >
                               {isDeleting ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -227,24 +225,25 @@ export default function WorkoutCreatePage() {
           <div className="space-y-4">
             <GenerateAIWorkoutDialog onSelectTemplate={handleSelectTemplate} />
 
-            <div className="divide-y divide-border/50 py-2">
+            <div className="divide-y divide-border/50">
               {precreatedTemplates.map((template) => (
-                <Button
-                  key={template.title}
-                  variant="ghost"
-                  className="flex items-center gap-3 py-2 w-full h-auto justify-start text-left group px-3"
-                  onClick={() => handleSelectTemplate(template)}
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate group-hover:text-primary transition-colors">
-                      {template.title}
-                    </p>
-                    <p className="text-sm text-muted-foreground truncate font-normal">
-                      {template.description}
-                    </p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
-                </Button>
+                <div className="py-2" key={template.title}>
+                  <Button
+                    variant="ghost"
+                    className="flex items-center gap-3 py-2 w-full h-auto justify-start text-left group px-3"
+                    onClick={() => handleSelectTemplate(template)}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate group-hover:text-primary transition-colors">
+                        {template.title}
+                      </p>
+                      <p className="text-sm text-muted-foreground truncate font-normal">
+                        {template.description}
+                      </p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
+                  </Button>
+                </div>
               ))}
             </div>
           </div>
