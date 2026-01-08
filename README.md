@@ -1,8 +1,73 @@
 # lift
 
-my personal hypertrophy training app
+A hypertrophy training app for tracking workouts, sets, and progression over time.
 
-## tasks
+## Features
+
+- Create and track workouts with exercises and sets
+- Track personal records (PRs) automatically on workout completion
+- View strength progression charts by muscle group or specific exercise
+- AI-powered workout generation based on training history and preferences
+- Activity calendar with workout sentiment tracking
+- Weekly volume analysis per muscle group
+
+## Tech Stack
+
+- Next.js 16 (App Router)
+- React 19
+- TypeScript
+- Tailwind CSS
+- Drizzle ORM with PostgreSQL
+- TanStack Query
+- Better Auth (Google OAuth)
+- Vercel AI SDK
+
+## Local Development
+
+### Prerequisites
+
+- Node.js 20+
+- pnpm 10+
+- PostgreSQL database
+
+### Environment Variables
+
+Create a `.env` file in the project root. See `src/env.js` for the schema. Required variables:
+
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `BETTER_AUTH_SECRET` | Secret key for Better Auth sessions |
+| `BETTER_AUTH_URL` | Base URL for auth (e.g., `http://localhost:3000`) |
+| `NEXT_PUBLIC_APP_URL` | Public app URL (e.g., `http://localhost:3000`) |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID from [Google Cloud Console](https://console.cloud.google.com/) |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
+| `MY_USER_ID` | Your user ID (restricts AI workout generation to this user) |
+| `AI_GATEWAY_API_KEY` | API key for AI Gateway (used for AI workout generation) |
+
+### Setup
+
+```bash
+# Install dependencies
+pnpm install
+
+# Push database schema
+pnpm db:push
+
+# Start development server
+pnpm dev
+```
+
+### Scripts
+
+- `pnpm dev` - Start development server with Turbopack
+- `pnpm build` - Build for production
+- `pnpm start` - Start production server
+- `pnpm db:push` - Push schema changes to database
+- `pnpm db:studio` - Open Drizzle Studio
+- `pnpm check` - Run linting and type checking
+
+## Tasks
 - [x] initial project setup
 - [x] setup db
 - [x] setup shadcn/themes
@@ -38,7 +103,7 @@ my personal hypertrophy training app
 - [x] complete AI workout generation
 - [ ] figure out what to test and how to test
 - [ ] add GitHub actions CI
-- [ ] how do I want to deploy this? VPS or AWS/GCP or to railway via docker containers & github actions? 
+- [x] deploy on railway
 
 ### adding last month of workout data to AI workout generation prompt
 Options for user to select:
