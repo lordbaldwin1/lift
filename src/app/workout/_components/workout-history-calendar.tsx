@@ -1,9 +1,10 @@
 "use client"
 
-import * as React from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 
 import { Calendar, CalendarDayButton } from "~/components/ui/calendar"
+import { Skeleton } from "~/components/ui/skeleton"
 import type { DBWorkout, Sentiment } from "~/server/db/schema"
 
 type DayButtonProps = React.ComponentProps<typeof CalendarDayButton>
@@ -18,21 +19,31 @@ const sentimentFaces: Record<Sentiment, string> = {
   bad: "(• ‸ •)",
 }
 
-function isSameDay(date1: Date, date2: Date): boolean {
+function isSameDay(date1: Date | string, date2: Date): boolean {
+  const d1 = new Date(date1);
   return (
-    date1.getFullYear() === date2.getFullYear() &&
-    date1.getMonth() === date2.getMonth() &&
-    date1.getDate() === date2.getDate()
+    d1.getFullYear() === date2.getFullYear() &&
+    d1.getMonth() === date2.getMonth() &&
+    d1.getDate() === date2.getDate()
   )
 }
 
 export default function WorkoutHistoryCalendar({ workouts }: WorkoutHistoryCalendarProps) {
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const getWorkoutForDay = (date: Date): DBWorkout | undefined => {
     return workouts.find(
       (workout) => workout.completedAt && isSameDay(workout.completedAt, date)
     )
+  }
+
+  if (!mounted) {
+    return <Skeleton className="h-[300px] w-full max-w-[350px]" />
   }
 
   return (
@@ -44,7 +55,7 @@ export default function WorkoutHistoryCalendar({ workouts }: WorkoutHistoryCalen
       className="rounded-lg border border-border/50 shadow-sm [--cell-size:--spacing(11)] md:[--cell-size:--spacing(13)]"
       formatters={{
         formatMonthDropdown: (date: Date) => {
-          return date.toLocaleString("default", { month: "long" })
+          return date.toLocaleString("en-US", { month: "long" })
         },
       }}
       components={{

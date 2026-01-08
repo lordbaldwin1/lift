@@ -59,7 +59,7 @@ export default function WorkoutHistoryCard({
           <ScrollArea className="h-[320px]">
             <div className="space-y-1 pr-4">
               {workouts
-                .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                 .map((workout) => (
                   <div 
                     key={workout.id} 
@@ -87,9 +87,10 @@ export default function WorkoutHistoryCard({
                           </div>
                         </div>
                         <span className="text-xs text-muted-foreground/60 shrink-0 font-normal tabular-nums">
-                          {(workout.completedAt ?? workout.createdAt).toLocaleDateString("en-US", {
+                          {new Date(workout.completedAt ?? workout.createdAt).toLocaleDateString("en-US", {
                             month: "short",
                             day: "numeric",
+                            timeZone: "UTC",
                           })}
                         </span>
                         <ChevronRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-200 shrink-0" />
