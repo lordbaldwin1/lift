@@ -41,7 +41,7 @@ export default function WorkoutHistoryCalendar({ workouts }: WorkoutHistoryCalen
       numberOfMonths={1}
       showOutsideDays={false}
       onSelect={() => {}}
-      className="rounded-md border shadow-sm [--cell-size:--spacing(11)] md:[--cell-size:--spacing(13)]"
+      className="rounded-lg border border-border/50 shadow-sm [--cell-size:--spacing(11)] md:[--cell-size:--spacing(13)]"
       formatters={{
         formatMonthDropdown: (date: Date) => {
           return date.toLocaleString("default", { month: "long" })
@@ -62,11 +62,12 @@ export default function WorkoutHistoryCalendar({ workouts }: WorkoutHistoryCalen
                   router.push(`/workout/${workout.id}`)
                 }
               }}
+              className={workout ? "cursor-pointer" : ""}
             >
               {children}
               {!modifiers.outside && (
-                <span className={`text-[0.5rem] ${sentimentFace ? "" : "text-accent"}`}>
-                  {sentimentFace ?? "n/a"}
+                <span className={`text-[0.5rem] ${sentimentFace ? "text-foreground" : "text-muted-foreground/40"}`}>
+                  {sentimentFace ?? "—"}
                 </span>
               )}
             </CalendarDayButton>
@@ -76,3 +77,4 @@ export default function WorkoutHistoryCalendar({ workouts }: WorkoutHistoryCalen
     />
   )
 }
+

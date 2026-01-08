@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "../ui/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
-import { Textarea } from "../ui/textarea";
-import useWorkoutData from "./hooks/use-workout-data";
+import { Button } from "~/components/ui/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "~/components/ui/dialog";
+import { Textarea } from "~/components/ui/textarea";
+import useWorkoutData from "../_hooks/use-workout-data";
 import type { DBSet, DBWorkout, ExerciseWithSelection } from "~/server/db/schema";
-import useWorkoutMutations from "./hooks/use-workout-mutations";
+import useWorkoutMutations from "../_hooks/use-workout-mutations";
+import { Plus, FileText, Loader2 } from "lucide-react";
 
 type ExerciseButtonGroupProps = {
   workout: DBWorkout;
@@ -27,7 +28,6 @@ export default function ExerciseButtonGroup({
   const {
     addSetMutation,
     updateExerciseNoteMutation,
-    addExerciseMutation,
   } = useWorkoutMutations({ userId: workout.userId, workoutId: workout.id, exercises: exercises, sets: sets });
 
   function handleAddSet(exerciseId: string) {
@@ -58,35 +58,44 @@ export default function ExerciseButtonGroup({
   const exerciseNote = localExerciseNotes[exercise.id] ?? exercise.note ?? "";
   const isSavingNote = updateExerciseNoteMutation.isPending &&
     updateExerciseNoteMutation.variables?.exerciseId === exercise.id;
+  const isAddingSet = addSetMutation.isPending;
   const isAddingExercise = exercise.id.startsWith("temp-");
+
   return (
-    <div className="mt-8 flex items-center justify-center">
+    <div className="flex items-center gap-2 pt-2">
       <Button
-        variant={"outline"}
-        className="w-1/4 rounded-none rounded-l-lg"
+        variant="outline"
+        size="sm"
+        className="gap-1.5"
         onClick={() => handleAddSet(exercise.id)}
-        disabled={workout.completed || isAddingExercise}
+        disabled={workout.completed || isAddingExercise || isAddingSet}
       >
-        new set
+        {isAddingSet ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <Plus className="h-3.5 w-3.5" />
+        )}
+        Add Set
       </Button>
       <Dialog>
         <DialogTrigger asChild>
           <Button
-            variant={"outline"}
-            className="w-1/4 rounded-none rounded-r-lg"
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 text-muted-foreground"
             disabled={workout.completed}
           >
-            add note
+            <FileText className="h-3.5 w-3.5" />
+            {exercise.note ? "Edit Note" : "Add Note"}
           </Button>
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              how did you feel during this exercise?
+            <DialogTitle className="font-display text-2xl tracking-tight">
+              EXERCISE NOTES
             </DialogTitle>
             <DialogDescription>
-              in the future, this will be taken into account when
-              pregenerating your next workouts.
+              How did you feel during this exercise? This will help personalize future workouts.
             </DialogDescription>
           </DialogHeader>
           <Textarea
@@ -95,27 +104,33 @@ export default function ExerciseButtonGroup({
             onChange={(e) =>
               handleUpdateExerciseNote(exercise.id, e.target.value)
             }
-            placeholder={`felt great today, hit a PR on my top set...`}
+            placeholder="Felt great today, hit a PR on my top set..."
             disabled={workout.completed}
+            className="min-h-[120px]"
           />
           <DialogFooter>
             <DialogClose asChild>
-              <div className="space-x-2">
-                <Button type="button" variant="secondary">
-                  close
-                </Button>
-                <Button
-                  type="submit"
-                  onClick={() => handleSaveExerciseNote(exercise.id)}
-                  disabled={workout.completed || isSavingNote}
-                >
-                  {isSavingNote ? "saving..." : "save note"}
-                </Button>
-              </div>
+              <Button type="button" variant="outline">
+                Cancel
+              </Button>
             </DialogClose>
+            <Button
+              onClick={() => handleSaveExerciseNote(exercise.id)}
+              disabled={workout.completed || isSavingNote}
+            >
+              {isSavingNote ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Saving...
+                </>
+              ) : (
+                "Save Note"
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   )
 }
+

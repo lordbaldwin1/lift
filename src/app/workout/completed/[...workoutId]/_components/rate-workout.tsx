@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useState } from "react";
 import type { DBWorkout, Sentiment } from "~/server/db/schema";
 import { updateWorkoutSentimentAction } from "~/server/actions/workout-actions";
-import { LoaderCircle, Check } from "lucide-react";
+import { LoaderCircle, Check, Trophy } from "lucide-react";
 import { cn } from "~/lib/utils";
 
 type RateWorkoutProps = {
@@ -12,9 +12,9 @@ type RateWorkoutProps = {
 };
 
 const sentimentOptions: { value: Sentiment; face: string; label: string }[] = [
-  { value: "good", face: "(•‿•)", label: "Good" },
+  { value: "good", face: "(•‿•)", label: "Great" },
   { value: "medium", face: "(• _ •)", label: "Okay" },
-  { value: "bad", face: "(• ‸ •)", label: "Bad" },
+  { value: "bad", face: "(• ‸ •)", label: "Tough" },
 ];
 
 export default function RateWorkout(props: RateWorkoutProps) {
@@ -51,28 +51,38 @@ export default function RateWorkout(props: RateWorkoutProps) {
   }
 
   return (
-    <div className="mt-12 flex w-full max-w-md justify-center items-center flex-col space-y-6">
-      <div className="text-center space-y-2">
-        <h1 className="text-2xl">Your {workout.title} is complete</h1>
-        <p className="text-muted-foreground">How did it go?</p>
+    <div className="flex w-full justify-center items-center flex-col space-y-6 pb-8">
+      <div className="text-center space-y-3">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-2">
+          <Trophy className="h-8 w-8 text-primary" />
+        </div>
+        <h1 className="font-display text-4xl sm:text-5xl tracking-tight text-foreground uppercase">
+          WORKOUT COMPLETE
+        </h1>
+        <p className="text-muted-foreground">
+          <span className="font-medium text-foreground">{workout.title}</span> — How did it go?
+        </p>
       </div>
 
-      <div className="flex flex-row items-start justify-center gap-8">
+      <div className="flex flex-row items-start justify-center gap-4 sm:gap-6">
         {sentimentOptions.map((option) => (
           <button
             key={option.value}
             onClick={() => handleUpdateSentiment(option.value)}
             disabled={loading}
             className={cn(
-              "flex flex-col items-center gap-2 rounded-xl px-4 py-3 transition-all duration-150",
-              "hover:bg-accent",
+              "flex flex-col items-center gap-2 rounded-xl px-5 py-4 transition-all duration-200",
+              "hover:bg-muted/50 hover:scale-105",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              selectedSentiment === option.value && "bg-accent ring-2 ring-primary",
+              selectedSentiment === option.value && "bg-primary/10 ring-2 ring-primary scale-105",
               loading && "opacity-50 cursor-not-allowed"
             )}
           >
-            <span className="text-3xl select-none">{option.face}</span>
-            <span className="text-sm text-muted-foreground font-medium">
+            <span className="text-4xl select-none">{option.face}</span>
+            <span className={cn(
+              "text-sm font-medium transition-colors",
+              selectedSentiment === option.value ? "text-primary" : "text-muted-foreground"
+            )}>
               {option.label}
             </span>
           </button>
@@ -92,9 +102,9 @@ export default function RateWorkout(props: RateWorkoutProps) {
             <span>Saved</span>
           </div>
         )}
-        {!loading && !saved && (
+        {!loading && !saved && !selectedSentiment && (
           <button
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="text-sm text-muted-foreground/60 hover:text-muted-foreground transition-colors duration-200"
             onClick={() => toast.info("Skipped rating")}
           >
             Skip for now
@@ -104,3 +114,4 @@ export default function RateWorkout(props: RateWorkoutProps) {
     </div>
   );
 }
+

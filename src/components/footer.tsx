@@ -1,40 +1,43 @@
-import { Cat, Code, Mail } from "lucide-react";
+import { User, Mail, Code } from "lucide-react";
 
 export default function Footer() {
   return (
-    <footer className="bg-background backdrop-blur-sm transition-opacity duration-300">
-      <div className="mx-auto max-w-4xl px-4">
-        <div className="flex justify-center gap-6">
-          <a
-            href="https://github.com/lordbaldwin1/lift"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Code className="h-4 w-4" />
-            <span className="text-sm">GitHub</span>
-          </a>
-          <a
-            href="https://zacharyspringer.dev/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Cat className="h-4 w-4" />
-            <span className="text-sm">Me</span>
-          </a>
-          <a
-            href="mailto:springerczachary@gmail.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Mail className="h-4 w-4" />
-            Contact
-            </a>
-          
+    <footer className="mt-auto pt-12 pb-2">
+      <div className="flex flex-col items-center gap-4">
+        <div className="h-px w-16 bg-border" />
+        <div className="flex items-center gap-6">
+          <FooterLink href="https://github.com/lordbaldwin1/lift" icon={<Code />} label="GitHub" />
+          <FooterLink href="https://zacharyspringer.dev/" icon={<User />} label="About" />
+          <FooterLink href="mailto:springerczachary@gmail.com" icon={<Mail />} label="Contact" />
         </div>
+        <p className="text-xs text-muted-foreground/60">
+          Built for lifters who value simplicity.
+        </p>
       </div>
     </footer>
+  );
+}
+
+function FooterLink({ 
+  href, 
+  icon, 
+  label 
+}: { 
+  href: string; 
+  icon: React.ReactNode; 
+  label: string; 
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group inline-flex items-center gap-1.5 text-muted-foreground transition-colors duration-200 hover:text-foreground"
+    >
+      <span className="[&>svg]:h-3.5 [&>svg]:w-3.5 transition-transform duration-200 group-hover:-translate-y-0.5">
+        {icon}
+      </span>
+      <span className="text-sm">{label}</span>
+    </a>
   );
 } 

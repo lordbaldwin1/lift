@@ -2,14 +2,14 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Loader2, Trash } from "lucide-react";
+import { ChevronRight, Loader2, Trash, CheckCircle2, Clock } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "./ui/button";
-import { ScrollArea } from "./ui/scroll-area";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Button } from "~/components/ui/button";
+import { ScrollArea } from "~/components/ui/scroll-area";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import Link from "next/link";
 import type { DBWorkout } from "~/server/db/schema";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "~/components/ui/dialog";
 import { deleteWorkoutAction } from "~/server/actions/workout-actions";
 
 type WorkoutHistoryCardProps = {
@@ -44,56 +44,70 @@ export default function WorkoutHistoryCard({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          Workout history
+      <CardHeader className="pb-2">
+        <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          Workout History
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-2">
         {workouts.length === 0 ? (
-          <p className="text-muted-foreground text-center py-8">
-            Your workout history will appear here.
-          </p>
+          <div className="py-8 text-center">
+            <p className="text-muted-foreground">Your workout history will appear here.</p>
+            <p className="text-xs text-muted-foreground/60 mt-1">Start a workout to begin tracking.</p>
+          </div>
         ) : (
-          <ScrollArea className="h-[300px]">
-            <div className="divide-y divide-border/50 py-2 pr-4">
+          <ScrollArea className="h-[320px]">
+            <div className="space-y-1 pr-4">
               {workouts
                 .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
                 .map((workout) => (
-                  <div key={workout.id} className="flex items-center gap-2 py-2">
+                  <div 
+                    key={workout.id} 
+                    className="flex items-center gap-2 rounded-lg hover:bg-muted/50 transition-colors duration-200"
+                  >
                     <Button
                       variant="ghost"
-                      className="flex items-center gap-3 flex-1 h-auto justify-start text-left group px-3 py-2 min-w-0"
+                      className="flex items-center gap-3 flex-1 h-auto justify-start text-left group px-3 py-3 min-w-0 hover:bg-transparent"
                       asChild
                     >
                       <Link href={`/workout/${workout.id}`}>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate group-hover:text-primary transition-colors">
+                          <p className="font-medium truncate group-hover:text-primary transition-colors duration-200">
                             {workout.title}
                           </p>
-                          <p className="text-sm text-muted-foreground truncate font-normal">
-                            {workout.completed ? "Completed" : "In progress"}
-                          </p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            {workout.completed ? (
+                              <CheckCircle2 className="h-3 w-3 text-primary" />
+                            ) : (
+                              <Clock className="h-3 w-3 text-muted-foreground" />
+                            )}
+                            <span className="text-xs text-muted-foreground">
+                              {workout.completed ? "Completed" : "In progress"}
+                            </span>
+                          </div>
                         </div>
-                        <span className="text-xs text-muted-foreground/60 shrink-0 font-normal">
+                        <span className="text-xs text-muted-foreground/60 shrink-0 font-normal tabular-nums">
                           {(workout.completedAt ?? workout.createdAt).toLocaleDateString("en-US", {
-                            weekday: "short",
                             month: "short",
                             day: "numeric",
                           })}
                         </span>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
+                        <ChevronRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-200 shrink-0" />
                       </Link>
                     </Button>
                     <Dialog open={openDialogId === workout.id} onOpenChange={(open) => setOpenDialogId(open ? workout.id : null)}>
                       <DialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-9 w-9 shrink-0 mr-2 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors duration-200"
+                        >
                           <Trash className="h-4 w-4" />
                         </Button>
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader>
-                          <DialogTitle>Are you sure?</DialogTitle>
+                          <DialogTitle>Delete workout?</DialogTitle>
                           <DialogDescription>
                             This action cannot be undone. This will permanently delete &quot;{workout.title}&quot; and all associated data.
                           </DialogDescription>
@@ -106,7 +120,6 @@ export default function WorkoutHistoryCard({
                             variant="destructive"
                             onClick={() => handleDelete(workout.id)}
                             disabled={isPending && deletingId === workout.id}
-                            className="w-full sm:w-auto"
                           >
                             {isPending && deletingId === workout.id ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
@@ -126,3 +139,4 @@ export default function WorkoutHistoryCard({
     </Card>
   )
 }
+

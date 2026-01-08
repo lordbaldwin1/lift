@@ -151,6 +151,20 @@ export const workoutTemplate = pgTable("workout_template", {
 export type NewWorkoutTemplate = typeof workoutTemplate.$inferInsert;
 export type DBWorkoutTemplate = typeof workoutTemplate.$inferSelect;
 
+export const userTrackedExercise = pgTable("user_tracked_exercise", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  exerciseSelectionId: uuid("exercise_selection_id")
+    .notNull()
+    .references(() => exerciseSelection.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type NewUserTrackedExercise = typeof userTrackedExercise.$inferInsert;
+export type DBUserTrackedExercise = typeof userTrackedExercise.$inferSelect;
+
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),

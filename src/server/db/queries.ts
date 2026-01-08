@@ -16,7 +16,9 @@ import {
   set,
   workout,
   workoutTemplate,
+  userTrackedExercise,
 } from "./schema";
+import type { NewUserTrackedExercise } from "./schema";
 
 export async function insertWorkout(newWorkout: NewWorkout) {
   const [row] = await db.insert(workout).values(newWorkout).returning();
@@ -702,6 +704,184 @@ export async function updateWorkoutTemplate(
     .update(workoutTemplate)
     .set({ title, description, exercises })
     .where(eq(workoutTemplate.id, templateId))
+    .returning();
+  return row;
+}
+
+const MUSCLE_GROUP_MAPPING: Record<string, string[]> = {
+  chest: ["chest"],
+  back: ["lats", "mid_upper_back"],
+  legs: ["quad", "hamstring", "calf", "glutes"],
+};
+
+// Epley formula: weight × (1 + reps / 30)
+function calculateE1RM(weight: number, reps: number): number {
+  if (reps === 0 || weight === 0) return 0;
+  return weight * (1 + reps / 30);
+}
+
+function getWeekStart(date: Date): Date {
+  const d = new Date(date);
+  d.setDate(d.getDate() - d.getDay());
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+export type ProgressionDataPoint = {
+  weekStart: string;
+  chest: number | null;
+  back: number | null;
+  legs: number | null;
+};
+
+export async function selectProgressionData(
+  userId: string,
+  startDate: Date
+): Promise<ProgressionDataPoint[]> {
+  const rows = await db
+    .select({
+      weight: set.weight,
+      reps: set.reps,
+      primaryMuscleGroup: exerciseSelection.primaryMuscleGroup,
+      completedAt: workout.completedAt,
+    })
+    .from(set)
+    .innerJoin(exercise, eq(set.exerciseId, exercise.id))
+    .innerJoin(workout, eq(exercise.workoutId, workout.id))
+    .innerJoin(exerciseSelection, eq(exercise.exerciseSelectionId, exerciseSelection.id))
+    .where(
+      and(
+        eq(workout.userId, userId),
+        eq(workout.completed, true),
+        gte(workout.completedAt, startDate)
+      )
+    );
+
+  const weeklyData: Record<string, { chest: number[]; back: number[]; legs: number[] }> = {};
+
+  for (const row of rows) {
+    if (!row.weight || !row.reps || !row.completedAt) continue;
+
+    const weekStart = getWeekStart(row.completedAt).toISOString().split("T")[0]!;
+    const e1rm = calculateE1RM(row.weight, row.reps);
+
+    if (!weeklyData[weekStart]) {
+      weeklyData[weekStart] = { chest: [], back: [], legs: [] };
+    }
+
+    for (const [category, muscleGroups] of Object.entries(MUSCLE_GROUP_MAPPING)) {
+      if (muscleGroups.includes(row.primaryMuscleGroup)) {
+        weeklyData[weekStart][category as keyof typeof weeklyData[string]]!.push(e1rm);
+      }
+    }
+  }
+
+  const result: ProgressionDataPoint[] = Object.entries(weeklyData)
+    .map(([weekStart, data]) => ({
+      weekStart,
+      chest: data.chest.length > 0 ? Math.round(data.chest.reduce((a, b) => a + b, 0) / data.chest.length) : null,
+      back: data.back.length > 0 ? Math.round(data.back.reduce((a, b) => a + b, 0) / data.back.length) : null,
+      legs: data.legs.length > 0 ? Math.round(data.legs.reduce((a, b) => a + b, 0) / data.legs.length) : null,
+    }))
+    .sort((a, b) => a.weekStart.localeCompare(b.weekStart));
+
+  return result;
+}
+
+export type ExerciseProgressionDataPoint = {
+  weekStart: string;
+  e1rm: number;
+};
+
+export async function selectExerciseProgressionData(
+  userId: string,
+  exerciseSelectionId: string,
+  startDate: Date
+): Promise<ExerciseProgressionDataPoint[]> {
+  const rows = await db
+    .select({
+      weight: set.weight,
+      reps: set.reps,
+      completedAt: workout.completedAt,
+    })
+    .from(set)
+    .innerJoin(exercise, eq(set.exerciseId, exercise.id))
+    .innerJoin(workout, eq(exercise.workoutId, workout.id))
+    .where(
+      and(
+        eq(workout.userId, userId),
+        eq(workout.completed, true),
+        eq(exercise.exerciseSelectionId, exerciseSelectionId),
+        gte(workout.completedAt, startDate)
+      )
+    );
+
+  const weeklyData: Record<string, number[]> = {};
+
+  for (const row of rows) {
+    if (!row.weight || !row.reps || !row.completedAt) continue;
+
+    const weekStart = getWeekStart(row.completedAt).toISOString().split("T")[0]!;
+    const e1rm = calculateE1RM(row.weight, row.reps);
+
+    if (!weeklyData[weekStart]) {
+      weeklyData[weekStart] = [];
+    }
+    weeklyData[weekStart].push(e1rm);
+  }
+
+  const result: ExerciseProgressionDataPoint[] = Object.entries(weeklyData)
+    .map(([weekStart, e1rms]) => ({
+      weekStart,
+      e1rm: Math.round(e1rms.reduce((a, b) => a + b, 0) / e1rms.length),
+    }))
+    .sort((a, b) => a.weekStart.localeCompare(b.weekStart));
+
+  return result;
+}
+
+export type TrackedExerciseWithSelection = {
+  id: string;
+  exerciseSelectionId: string;
+  exerciseSelection: {
+    id: string;
+    name: string;
+    primaryMuscleGroup: string;
+  };
+  createdAt: Date;
+};
+
+export async function selectUserTrackedExercises(
+  userId: string
+): Promise<TrackedExerciseWithSelection[]> {
+  const rows = await db
+    .select({
+      id: userTrackedExercise.id,
+      exerciseSelectionId: userTrackedExercise.exerciseSelectionId,
+      createdAt: userTrackedExercise.createdAt,
+      exerciseSelection: {
+        id: exerciseSelection.id,
+        name: exerciseSelection.name,
+        primaryMuscleGroup: exerciseSelection.primaryMuscleGroup,
+      },
+    })
+    .from(userTrackedExercise)
+    .innerJoin(exerciseSelection, eq(userTrackedExercise.exerciseSelectionId, exerciseSelection.id))
+    .where(eq(userTrackedExercise.userId, userId))
+    .orderBy(asc(userTrackedExercise.createdAt));
+
+  return rows;
+}
+
+export async function insertUserTrackedExercise(newTracked: NewUserTrackedExercise) {
+  const [row] = await db.insert(userTrackedExercise).values(newTracked).returning();
+  return row;
+}
+
+export async function deleteUserTrackedExercise(id: string) {
+  const [row] = await db
+    .delete(userTrackedExercise)
+    .where(eq(userTrackedExercise.id, id))
     .returning();
   return row;
 }

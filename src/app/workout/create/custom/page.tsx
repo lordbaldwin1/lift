@@ -20,7 +20,7 @@ import {
 } from "~/components/ui/command";
 import { toast } from "sonner";
 import { ArrowDown, ArrowUp, Loader2, Plus, Trash2 } from "lucide-react";
-import useExerciseSelectionData from "~/components/workout/hooks/use-exercise-selection-data";
+import useExerciseSelectionData from "../../_hooks/use-exercise-selection-data";
 import {
   createWorkoutTemplateAction,
   getWorkoutTemplateAction,
@@ -44,10 +44,8 @@ export default function CustomTemplatePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingTemplate, setIsLoadingTemplate] = useState(isEditMode);
 
-  // For the exercise picker popover
   const [popoverOpenIndex, setPopoverOpenIndex] = useState<number | null>(null);
 
-  // Fetch template data when editing
   useEffect(() => {
     if (!editTemplateId) return;
 
@@ -182,7 +180,6 @@ export default function CustomTemplatePage() {
       </div>
 
       <div className="flex w-full flex-col gap-8">
-        {/* Template Details */}
         <div className="space-y-4">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -212,7 +209,6 @@ export default function CustomTemplatePage() {
           </div>
         </div>
 
-        {/* Exercises */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-medium">Exercises</h2>
@@ -241,7 +237,6 @@ export default function CustomTemplatePage() {
                     {index + 1}
                   </span>
 
-                  {/* Exercise Picker */}
                   <Popover
                     open={popoverOpenIndex === index}
                     onOpenChange={(open) =>
@@ -289,7 +284,6 @@ export default function CustomTemplatePage() {
                     </PopoverContent>
                   </Popover>
 
-                  {/* Sets */}
                   <div className="flex items-center gap-0.5">
                     <Button
                       variant="ghost"
@@ -324,7 +318,6 @@ export default function CustomTemplatePage() {
                     </Button>
                   </div>
 
-                  {/* Reorder Buttons */}
                   <div className="flex gap-0.5">
                     <Button
                       variant="ghost"
@@ -346,7 +339,6 @@ export default function CustomTemplatePage() {
                     </Button>
                   </div>
 
-                  {/* Remove Button */}
                   <Button
                     variant="ghost"
                     size="icon"
@@ -361,7 +353,6 @@ export default function CustomTemplatePage() {
           )}
         </div>
 
-        {/* Action Buttons */}
         <div className="flex gap-3 pt-4">
           <Button
             variant="outline"

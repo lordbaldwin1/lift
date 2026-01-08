@@ -4,9 +4,9 @@ import {
   selectSetsByWorkout,
   selectWorkout,
 } from "~/server/db/queries";
-import WorkoutHeader from "~/components/workout/workout-header";
-import ExerciseList from "~/components/workout/exercise-list";
-import WorkoutButtonGroup from "~/components/workout/workout-button-group";
+import WorkoutHeader from "./_components/workout-header";
+import ExerciseList from "./_components/exercise-list";
+import WorkoutButtonGroup from "./_components/workout-button-group";
 
 export default async function WorkoutPage({
   params,
@@ -24,10 +24,12 @@ export default async function WorkoutPage({
   const sets = await selectSetsByWorkout(workoutId);
 
   return (
-    <main className="mt-8 flex flex-col items-center space-y-6">
-      <WorkoutHeader title={workout.title} description={workout.description} />
-      <main className="w-full">
-        <section className="flex w-full flex-col space-y-12">
+    <main className="py-8 space-y-8">
+      <div className="opacity-0 animate-fade-in-up">
+        <WorkoutHeader title={workout.title} description={workout.description} completed={workout.completed} />
+      </div>
+      <div className="w-full opacity-0 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+        <section className="flex w-full flex-col space-y-10">
           <ExerciseList
             workout={workout}
             initialExercises={exercises}
@@ -39,7 +41,7 @@ export default async function WorkoutPage({
             initialSets={sets}
           />
         </section>
-      </main>
+      </div>
     </main>
   );
 }

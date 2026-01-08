@@ -51,3 +51,4 @@ async function fetchSets(workoutId: string) {
     }
     return (await response.json()) as DBSet[];
 }
+

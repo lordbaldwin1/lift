@@ -18,3 +18,4 @@ async function fetchExerciseSelections() {
   }
   return (await response.json()) as ExerciseSelection[];
 }
+

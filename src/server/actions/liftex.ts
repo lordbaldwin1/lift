@@ -95,7 +95,6 @@ export async function generateWorkoutTemplateAction(generationQuestions: Generat
   const recentMuscleGroups = recentWorkouts.flatMap((w) => w.primaryMuscleGroups);
   const { workoutType, targetMuscleGroups } = determineNextWorkoutType(split, recentMuscleGroups);
 
-  // Weekly volume target is always 10-20 sets per muscle group
   const weeklyVolumeThresholds = { min: 8, optimalLow: 10, optimalHigh: 20, max: 24 };
 
   const muscleGroupAnalysis: string[] = [];
@@ -168,7 +167,6 @@ IMPORTANT: Prioritize the user's preferred exercises when possible, but you may 
 
   const exerciseNamesSet = new Set<string>(exerciseNames);
 
-  // Validate exercise selection names exist in database
   const maxRetries = 3;
   let retries = 0;
 

@@ -1,7 +1,7 @@
 import "~/styles/globals.css";
 
 import { type Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Bebas_Neue, Outfit } from "next/font/google";
 import { ThemeProvider } from "~/components/theme-provider";
 import Navbar from "~/components/navbar";
 import { Toaster } from "~/components/ui/sonner";
@@ -15,16 +15,22 @@ export const metadata: Metadata = {
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
-const inter = Inter({
+const bebasNeue = Bebas_Neue({
+  weight: "400",
   subsets: ["latin"],
-  variable: "--font-inter-sans",
+  variable: "--font-display",
+});
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-body",
 });
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${inter.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${bebasNeue.variable} ${outfit.variable}`} suppressHydrationWarning>
       <body className="min-h-screen flex flex-col">
         <div className="mx-auto w-full max-w-4xl px-4 py-8 flex flex-col flex-1">
           <QueryProvider>

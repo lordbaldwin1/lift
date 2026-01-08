@@ -28,59 +28,77 @@ export default function Navbar() {
   }
 
   return (
-    <section className="flex flex-row items-center justify-between bg-transparent p-1">
-      <div className="space-x-8 flex flex-row items-end">
-        <Link href={"/"} className="flex flex-row items-center group">
-          <h1 className="font-bold text-3xl md:block lg:block text-foreground group-hover:text-primary/90 duration-200">lift</h1>
-          <h1 className="font-bold text-3xl md:block lg:block text-primary/90 group-hover:text-foreground duration-200">things</h1>
+    <nav className="flex items-center justify-between py-2">
+      <div className="flex items-center gap-8">
+        <Link href="/" className="group flex items-baseline">
+          <span className="font-display text-3xl tracking-tight text-foreground transition-colors duration-200 group-hover:text-primary">
+            LIFT
+          </span>
+          <span className="font-display text-3xl tracking-tight text-primary transition-colors duration-200 group-hover:text-foreground">
+            THINGS
+          </span>
         </Link>
-        <Link href={"/workout"} className="hover:text-muted-foreground duration-200 text-md font-semibold">
+        <Link 
+          href="/workout" 
+          className="text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-foreground"
+        >
           Workouts
         </Link>
       </div>
-      <div className="flex flex-row space-x-6">
+      <div className="flex items-center gap-8">
         <ThemeToggle />
         {isPending ? (
-          <Button variant={"link"} className="p-0 w-8 h-8">
-            <Loader className="animate-spin" size={32} />
+          <Button variant="ghost" size="icon" className="h-9 w-9">
+            <Loader className="h-5 w-5 animate-spin" />
           </Button>
         ) : session ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant={"link"} className="hover:text-muted-foreground p-0 w-8 h-8">
-                {
-                  session.user.image
-                    ? <Image src={session.user.image} alt="your profile picture" width={32} height={32} className="rounded-full" />
-                    : <UserRound />
-                }
+              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
+                {session.user.image ? (
+                  <Image 
+                    src={session.user.image} 
+                    alt="your profile picture" 
+                    width={32} 
+                    height={32} 
+                    className="rounded-full ring-2 ring-border" 
+                  />
+                ) : (
+                  <UserRound className="h-5 w-5" />
+                )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel className="text-center">My Account</DropdownMenuLabel>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel className="font-normal">
+                <p className="text-sm font-medium">{session.user.name}</p>
+                <p className="text-xs text-muted-foreground truncate">{session.user.email}</p>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem>
-                  <User2Icon />
-                  <DropdownMenuShortcut>
-                    <Link href={`/account/${session.user.id}`}>
-                      {session.user.name}
-                    </Link>
-                  </DropdownMenuShortcut>
+                <DropdownMenuItem asChild>
+                  <Link href={`/account/${session.user.id}`} className="cursor-pointer">
+                    <User2Icon className="mr-2 h-4 w-4" />
+                    Account
+                  </Link>
                 </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="flex justify-center" onClick={handleSignOut}>
+              <DropdownMenuItem 
+                onClick={handleSignOut}
+                className="text-muted-foreground focus:text-foreground cursor-pointer"
+              >
                 Sign out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          <Link href={"/login"} className="hover:text-muted-foreground">
-            <Button className="rounded-full ml-4">
+          <Link href="/login">
+            <Button size="sm" className="font-medium">
               Sign in
             </Button>
           </Link>
         )}
       </div>
-    </section>
+    </nav>
   )
 }

@@ -1,18 +1,18 @@
 "use client";
 
-import { ArrowDown, ArrowUp, ChevronDownIcon } from "lucide-react";
-import { Button } from "../ui/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
-import { Label } from "../ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { Calendar } from "../ui/calendar";
+import { ArrowDown, ArrowUp, ChevronDownIcon, Plus, CheckCircle, Loader2 } from "lucide-react";
+import { Button } from "~/components/ui/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "~/components/ui/dialog";
+import { Label } from "~/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
+import { Calendar } from "~/components/ui/calendar";
 import { useState } from "react";
 import { toast } from "sonner";
-import useWorkoutMutations from "./hooks/use-workout-mutations";
+import useWorkoutMutations from "../_hooks/use-workout-mutations";
 import type { DBSet, DBWorkout, ExerciseWithSelection } from "~/server/db/schema";
-import useExerciseSelectionData from "./hooks/use-exercise-selection-data";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
-import useWorkoutData from "./hooks/use-workout-data";
+import useExerciseSelectionData from "../../_hooks/use-exercise-selection-data";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "~/components/ui/command";
+import useWorkoutData from "../_hooks/use-workout-data";
 
 type WorkoutButtonGroupProps = {
   workout: DBWorkout,
@@ -93,33 +93,48 @@ export default function WorkoutButtonGroup({
   const isCompletingWorkout = completeWorkoutMutation.isPending;
   const isAddingExercise = addExerciseMutation.isPending;
 
+  if (workout.completed) {
+    return null;
+  }
+
   return (
-    <div className="flex flex-col items-center space-y-2 mb-12">
+    <div className="flex flex-col items-center gap-3 pt-8 pb-4">
       <Dialog>
         <DialogTrigger asChild>
-          <Button className="w-1/2" disabled={workout.completed}>
-            add exercise
+          <Button 
+            size="lg" 
+            variant="outline"
+            className="w-full max-w-md font-semibold"
+            disabled={workout.completed}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Exercise
           </Button>
         </DialogTrigger>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>add an exercise</DialogTitle>
+            <DialogTitle className="font-display text-2xl tracking-tight">
+              ADD EXERCISE
+            </DialogTitle>
             <DialogDescription>
-              enter a name and select where to insert the exercise
+              Select an exercise and choose where to insert it in your workout.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex items-center gap-2">
-            <div className="grid flex-1 gap-2">
-              <Label htmlFor="link" className="sr-only">
-                Link
-              </Label>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Exercise</Label>
               <Popover open={open} onOpenChange={setOpen} modal={true}>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" role="combobox">
+                  <Button 
+                    variant="outline" 
+                    role="combobox" 
+                    className="w-full justify-between font-normal"
+                  >
                     {selectedExercise?.name ?? "Select exercise..."}
+                    <ChevronDownIcon className="h-4 w-4 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="p-0">
+                <PopoverContent className="p-0 w-[--radix-popover-trigger-width]">
                   <Command className="max-h-[300px]">
                     <CommandInput placeholder="Search exercises..." />
                     <CommandList className="max-h-[250px] overflow-y-auto">
@@ -143,55 +158,71 @@ export default function WorkoutButtonGroup({
                 </PopoverContent>
               </Popover>
             </div>
-          </div>
-          {exercises.map((exercise, i) => (
-            <div key={exercise.id} className="flex items-center justify-between">
-              <span>{exercise.exerciseSelection.name}</span>
-              <div className="space-x-1">
-                <Button
-                  variant={"ghost"}
-                  className={
-                    i === exerciseToAdd.position ? "bg-accent" : ""
-                  }
-                  onClick={() =>
-                    setExerciseToAdd((prev) => ({
-                      ...prev,
-                      position: i,
-                    }))
-                  }
-                  disabled={workout.completed || isAddingExercise}
-                >
-                  <ArrowUp />
-                </Button>
-                <Button
-                  variant={"ghost"}
-                  className={
-                    i + 1 === exerciseToAdd.position ? "bg-accent" : ""
-                  }
-                  onClick={() =>
-                    setExerciseToAdd((prev) => ({
-                      ...prev,
-                      position: i + 1,
-                    }))
-                  }
-                  disabled={workout.completed || isAddingExercise}
-                >
-                  <ArrowDown />
-                </Button>
+
+            {exercises.length > 0 && (
+              <div className="space-y-2">
+                <Label>Position</Label>
+                <div className="space-y-1 rounded-lg border border-border/50 p-2">
+                  {exercises.map((exercise, i) => (
+                    <div 
+                      key={exercise.id} 
+                      className="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-muted/50"
+                    >
+                      <span className="text-sm truncate">{exercise.exerciseSelection.name}</span>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={`h-7 w-7 ${i === exerciseToAdd.position ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}`}
+                          onClick={() =>
+                            setExerciseToAdd((prev) => ({
+                              ...prev,
+                              position: i,
+                            }))
+                          }
+                          disabled={workout.completed || isAddingExercise}
+                        >
+                          <ArrowUp className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={`h-7 w-7 ${i + 1 === exerciseToAdd.position ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}`}
+                          onClick={() =>
+                            setExerciseToAdd((prev) => ({
+                              ...prev,
+                              position: i + 1,
+                            }))
+                          }
+                          disabled={workout.completed || isAddingExercise}
+                        >
+                          <ArrowDown className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            )}
+          </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="secondary">
-                close
+              <Button type="button" variant="outline">
+                Cancel
               </Button>
             </DialogClose>
             <Button
               onClick={handleAddExercise}
               disabled={workout.completed || isAddingExercise}
             >
-              {isAddingExercise ? "adding..." : "add exercise"}
+              {isAddingExercise ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Adding...
+                </>
+              ) : (
+                "Add Exercise"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -199,38 +230,44 @@ export default function WorkoutButtonGroup({
 
       <Dialog>
         <DialogTrigger asChild>
-          <Button className="w-1/2" disabled={workout.completed || isCompletingWorkout}>
-            complete workout
+          <Button 
+            size="lg"
+            className="w-full max-w-md font-semibold"
+            disabled={workout.completed || isCompletingWorkout}
+          >
+            <CheckCircle className="h-4 w-4 mr-2" />
+            Complete Workout
           </Button>
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              are you sure you&apos;re finished with your workout?
+            <DialogTitle className="font-display text-2xl tracking-tight">
+              FINISH WORKOUT?
             </DialogTitle>
             <DialogDescription>
-              once you complete your workout, you will not be able to edit
-              it.
+              Once you complete your workout, you will not be able to edit it.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col gap-3">
+          <div className="space-y-3">
+            <Label>Workout Date</Label>
             <Popover
               open={workoutCompleteOpen}
               onOpenChange={setWorkoutCompleteOpen}
             >
-              <Label htmlFor="date" className="w-24 px-1">
-                workout date
-              </Label>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  id="date"
-                  className="w-48 justify-between font-normal"
+                  className="w-full justify-between font-normal"
                 >
                   {workoutDate
-                    ? workoutDate.toLocaleDateString()
-                    : "select date"}
-                  <ChevronDownIcon />
+                    ? workoutDate.toLocaleDateString("en-US", {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })
+                    : "Select date"}
+                  <ChevronDownIcon className="h-4 w-4 opacity-50" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent
@@ -252,22 +289,27 @@ export default function WorkoutButtonGroup({
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <div className="space-x-2">
-                <Button type="button" variant="secondary">
-                  close
-                </Button>
-                <Button
-                  variant={"destructive"}
-                  onClick={handleCompleteWorkout}
-                  disabled={workout.completed || isCompletingWorkout}
-                >
-                  {isCompletingWorkout ? "completing..." : "complete workout"}
-                </Button>
-              </div>
+              <Button type="button" variant="outline">
+                Cancel
+              </Button>
             </DialogClose>
+            <Button
+              onClick={handleCompleteWorkout}
+              disabled={workout.completed || isCompletingWorkout}
+            >
+              {isCompletingWorkout ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Completing...
+                </>
+              ) : (
+                "Complete Workout"
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   )
 }
+

@@ -64,7 +64,6 @@ export async function deleteWorkoutTemplateAction(templateId: string) {
     throw new Error("You must be signed in to delete a template.");
   }
 
-  // Verify ownership
   const userTemplates = await selectWorkoutTemplatesByUser(session.user.id);
   const templateToDelete = userTemplates.find((t) => t.id === templateId);
 
@@ -114,7 +113,6 @@ export async function updateWorkoutTemplateAction(input: UpdateTemplateInput) {
     throw new Error("You must be signed in to update a template.");
   }
 
-  // Verify ownership
   const existingTemplate = await selectWorkoutTemplateById(input.templateId);
 
   if (!existingTemplate) {

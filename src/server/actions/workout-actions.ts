@@ -188,11 +188,9 @@ export async function deleteExerciseAction(userId: string, exerciseId: string) {
 
   const deletedExercise = await deleteExercise(exerciseId);
   
-  // Get remaining exercises in the same workout to update their orders
   if (deletedExercise) {
     const remainingExercises = await selectExercises(deletedExercise.workoutId);
     
-    // Update order of exercises that came after the deleted one
     for (const exercise of remainingExercises) {
       if (exercise.order > deletedExercise.order) {
         await updateExerciseOrder(exercise.id, exercise.order - 1);
@@ -253,7 +251,6 @@ export async function completeWorkoutAction(userId: string, workoutId: string, w
   const setsWithSelection = await selectSetsByWorkoutWithExerciseSelection(workoutId);
   const exercisesWithSelection = await selectExercisesWithSelection(workoutId);
 
-  // Find top set (highest weight + reps) for each exercise
   type TopSet = {
     setId: string;
     exerciseSelectionId: string;
@@ -291,15 +288,12 @@ export async function completeWorkoutAction(userId: string, workoutId: string, w
     }
   }
 
-  // Check each top set against existing PRs and insert new PRs if qualified
   for (const topSet of Object.values(topSetsByExercise)) {
     const existingPRs = await selectPRsForUserAndExerciseSelection(userId, topSet.exerciseSelectionId);
     
     const prAtSameWeight = existingPRs.find(pr => pr.weight === topSet.weight);
 
-    // PR qualifies if:
-    // 1. No existing PR at this weight (new weight = automatic PR)
-    // 2. Existing PR at this weight but with fewer reps
+    // PR: new weight OR more reps at same weight
     const isPR = !prAtSameWeight || topSet.reps > prAtSameWeight.reps;
 
     if (isPR) {
