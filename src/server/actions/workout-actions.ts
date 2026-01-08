@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { auth } from "../auth/auth";
 import { completeWorkout, deleteExercise, deleteSet, insertExercise, insertPersonalRecord, insertSet, insertWorkout, selectExercisesWithSelection, selectPRsForUserAndExerciseSelection, selectSetsByWorkoutWithExerciseSelection, updateExerciseNote, updateExerciseOrder, updateSet, updateSetOrder, updateWorkoutSentiment, selectExercises, deleteWorkout, selectExerciseSelections } from "../db/queries";
-import type { WorkoutTemplate } from "~/app/workout/create/page";
+import type { WorkoutTemplate } from "~/app/workout/create/_components/precreated-templates";
 import type { DBExercise, DBSet, NewExercise, NewSet, Sentiment } from "../db/schema";
 
 export async function createWorkout(workout: WorkoutTemplate) {
