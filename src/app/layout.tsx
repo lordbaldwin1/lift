@@ -12,7 +12,7 @@ import Footer from "~/components/footer";
 export const metadata: Metadata = {
   metadataBase: new URL("https://liftthings.up.railway.app"),
   title: {
-    default: "lift",
+    default: "liftthings | A simple, free hypertrophy training app",
     template: "%s | lift",
   },
   description:
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     "fitness app",
   ],
   openGraph: {
-    siteName: "lift",
+    siteName: "liftthings | A simple, free hypertrophy training app",
     type: "website",
     locale: "en_US",
   },
