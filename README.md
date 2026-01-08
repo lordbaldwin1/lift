@@ -2,6 +2,8 @@
 
 A hypertrophy training app for tracking workouts, sets, and progression over time.
 
+**Live:** https://liftthings.up.railway.app/
+
 ## Features
 
 - Create and track workouts with exercises and sets
