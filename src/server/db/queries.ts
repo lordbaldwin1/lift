@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, sql, count, min, desc } from "drizzle-orm";
+import { and, asc, eq, gte, sql, count, min, desc, isNotNull } from "drizzle-orm";
 import { db } from ".";
 import type {
   NewExercise,
@@ -884,4 +884,12 @@ export async function deleteUserTrackedExercise(id: string) {
     .where(eq(userTrackedExercise.id, id))
     .returning();
   return row;
+}
+
+export async function selectTotalCompletedWorkouts() {
+  const result = await db
+    .select({ count: count() })
+    .from(workout)
+    .where(isNotNull(workout.completedAt));
+  return result[0]?.count ?? 0;
 }

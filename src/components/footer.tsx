@@ -4,10 +4,10 @@ export default function Footer() {
   return (
     <footer className="mt-auto pt-12 pb-2">
       <div className="flex flex-col items-center gap-4">
-        <div className="h-px w-16 bg-border" />
+        <div className="h-px w-112 bg-border" />
         <div className="flex items-center gap-6">
           <FooterLink href="https://github.com/lordbaldwin1/lift" icon={<Code />} label="GitHub" />
-          <FooterLink href="https://zacharyspringer.dev/" icon={<User />} label="About" />
+          <FooterLink href="https://zacharyspringer.dev/" icon={<User />} label="Me" />
           <FooterLink href="mailto:springerczachary@gmail.com" icon={<Mail />} label="Contact" />
         </div>
         <p className="text-xs text-muted-foreground/60">

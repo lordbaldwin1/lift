@@ -43,6 +43,12 @@ export default function Navbar() {
         >
           Workouts
         </Link>
+        <Link 
+          href="/about" 
+          className="text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-foreground"
+        >
+          About
+        </Link>
       </div>
       <div className="flex items-center gap-8">
         <ThemeToggle />
