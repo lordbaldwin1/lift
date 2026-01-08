@@ -10,8 +10,27 @@ import { QueryProvider } from "~/components/query-provider";
 import Footer from "~/components/footer";
 
 export const metadata: Metadata = {
-  title: "lift",
-  description: "hypertrophy training application",
+  metadataBase: new URL("https://liftthings.up.railway.app"),
+  title: {
+    default: "lift",
+    template: "%s | lift",
+  },
+  description:
+    "A simple, free hypertrophy training application.",
+  keywords: [
+    "workout tracker",
+    "hypertrophy",
+    "strength training",
+    "fitness app",
+  ],
+  openGraph: {
+    siteName: "lift",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
